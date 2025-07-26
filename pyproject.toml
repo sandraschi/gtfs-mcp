@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gtfs-mcp"
+version = "0.1.0"
+description = "FastMCP 2.10 compliant GTFS server for transit data"
+authors = [
+    { name = "Sandra Schilling", email = "sandra@example.com" },
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "fastmcp>=2.10.0",
+    "aiohttp>=3.8.0",
+    "pydantic>=2.0.0",
+    "aiosqlite>=0.18.0",
+    "python-dateutil>=2.8.0",
+    "pytz>=2022.0",
+    "fastapi>=0.95.0",
+    "uvicorn>=0.21.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.20.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.0.0",
+    "httpx>=0.24.0",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
