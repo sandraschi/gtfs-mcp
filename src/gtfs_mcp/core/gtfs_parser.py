@@ -1,4 +1,4 @@
-""
+"""
 GTFS Parser Module
 
 Handles parsing of GTFS feed files with robust error handling for real-world data issues.
@@ -43,7 +43,7 @@ class GTFSFeed:
         self.loaded = False
     
     def load(self) -> None:
-        ""Load all GTFS data from the feed directory.""
+        """Load all GTFS data from the feed directory."""
         if self.loaded:
             return
             
@@ -66,13 +66,8 @@ class GTFSFeed:
         self.loaded = True
         logger.info(f"Loaded GTFS feed with {len(self.stops)} stops and {len(self.routes)} routes")
     
-    def _load_file(
-        self, 
-        filename: str, 
-        required: bool = True,
-        single: bool = False
-    ) -> Union[List[Dict[str, Any]], Dict[str, Any], None]:
-        ""Load a GTFS file and return its contents as a list of dictionaries.""
+    def _load_file(self, filename: str, required: bool = True, single: bool = False) -> Union[List[Dict[str, Any]], Dict[str, Any]]:
+        """Load a GTFS file and return its contents as a list of dictionaries."""
         filepath = self.feed_dir / filename
         
         if not filepath.exists():
@@ -98,7 +93,10 @@ class GTFSFeed:
             return [] if not single else {}
     
     def _build_indices(self) -> None:
-        ""Build lookup indices for faster access to GTFS data.""
+        """Build lookup indices for faster access to GTFS data.
+        
+        This method creates dictionaries for faster lookups of routes, stops, and trips by their IDs.
+        """
         # Build route index
         self.routes_by_id = {route['route_id']: route for route in self.routes}
         
@@ -130,8 +128,7 @@ class GTFSFeed:
         route_id: Optional[str] = None,
         limit: int = 10
     ) -> List[Dict[str, Any]]:
-        ""
-        Get upcoming departures for a stop.
+        """Get upcoming departures for a stop.
         
         Args:
             stop_id: ID of the stop
@@ -142,7 +139,7 @@ class GTFSFeed:
             
         Returns:
             List of departure dictionaries with trip and route information
-        ""
+        """
         if not self.loaded:
             self.load()
             
@@ -216,7 +213,7 @@ class GTFSFeed:
             service_id = trip.get('service_id')
             
             # Check if service is active today
-            if self._is_service_active(service_id, today, weekday):
+            if self._is_service_active(service_id, today):
                 active_departures.append(dep)
                 
                 if len(active_departures) >= limit:
@@ -227,17 +224,17 @@ class GTFSFeed:
     def _is_service_active(
         self, 
         service_id: str, 
-        date: datetime.date, 
-        weekday: str
+        date: datetime.date
     ) -> bool:
-        ""Check if a service is active on the given date.""
+        """Check if a service is active on the given date."""
         if not service_id:
             return False
             
-        # Check calendar_dates.txt for exceptions
-        for cd in self.calendar_dates:
-            if cd.get('service_id') == service_id and cd.get('date') == date.strftime('%Y%m%d'):
-                return cd.get('exception_type') == '1'  # 1 = added, 2 = removed
+        # Check calendar_dates.txt first (exceptions)
+        for cal_date in self.calendar_dates:
+            if (cal_date['service_id'] == service_id and 
+                datetime.strptime(cal_date['date'], '%Y%m%d').date() == date):
+                return cal_date['exception_type'] == '1'  # 1 = added, 2 = removed
         
         # Check calendar.txt for regular service
         for cal in self.calendar:
@@ -259,7 +256,7 @@ class GTFSFeed:
     
     @staticmethod
     def _parse_gtfs_time(time_str: str) -> Optional[time]:
-        ""Parse GTFS time string (HH:MM:SS or H:MM:SS) to time object."""
+        """Parse GTFS time string (HH:MM:SS or H:MM:SS) to time object."""
         if not time_str:
             return None
             
@@ -282,7 +279,7 @@ class GTFSFeed:
     
     @staticmethod
     def _parse_gtfs_date(date_str: str) -> Optional[datetime.date]:
-        ""Parse GTFS date string (YYYYMMDD) to date object."""
+        """Parse GTFS date string (YYYYMMDD) to date object."""
         if not date_str or len(date_str) != 8:
             return None
             

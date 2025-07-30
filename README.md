@@ -1,6 +1,9 @@
 # GTFS MCP Server
 
-A FastMCP 2.10 compliant server for downloading, parsing, and serving GTFS (General Transit Feed Specification) data. This server provides a standardized API for accessing transit data from various agencies, handling the quirks and inconsistencies of real-world GTFS feeds.
+A FastMCP 2.10 compliant server for downloading, parsing, and serving GTFS
+(General Transit Feed Specification) data. This server provides a standardized API
+for accessing transit data from various agencies, handling the quirks and
+inconsistencies of real-world GTFS feeds.
 
 ## Features
 
@@ -21,17 +24,20 @@ A FastMCP 2.10 compliant server for downloading, parsing, and serving GTFS (Gene
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/sandraschi/gtfs-mcp.git
    cd gtfs-mcp
    ```
 
 2. Install dependencies:
+
    ```bash
    pip install -e .
    ```
 
 3. Create a `.env` file (optional):
+
    ```env
    GTFS_MCP_HOST=0.0.0.0
    GTFS_MCP_PORT=8000
@@ -59,6 +65,7 @@ Once the server is running, you can access:
 
 1. Find the GTFS feed URL for your transit agency (e.g., [TransitFeeds](https://transitfeeds.com/))
 2. Add the feed using the MCP tool:
+
    ```bash
    curl -X POST "http://localhost:8000/v1/feeds" \
      -H "Content-Type: application/json" \
@@ -68,16 +75,19 @@ Once the server is running, you can access:
 ## Example Queries
 
 ### Find Stops by Name
+
 ```bash
 curl "http://localhost:8000/v1/stops/search?feed_id=my-feed&query=central"
 ```
 
 ### Get Stop Information
+
 ```bash
 curl "http://localhost:8000/v1/stops/12345?feed_id=my-feed"
 ```
 
 ### Get Upcoming Departures
+
 ```bash
 curl "http://localhost:8000/v1/stops/12345/departures?feed_id=my-feed&limit=5"
 ```
@@ -86,7 +96,7 @@ curl "http://localhost:8000/v1/stops/12345/departures?feed_id=my-feed&limit=5"
 
 ### Project Structure
 
-```
+```text
 gtfs-mcp/
 ├── src/
 │   └── gtfs_mcp/           # Main package
@@ -110,11 +120,13 @@ pytest
 ### Code Style
 
 This project uses:
+
 - **Black** for code formatting
 - **isort** for import sorting
 - **mypy** for type checking
 
 Run the following before committing:
+
 ```bash
 black .
 isort .

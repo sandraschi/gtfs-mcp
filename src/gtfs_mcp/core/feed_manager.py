@@ -1,5 +1,5 @@
-""
-GTFS Feed Manager
+"""
+GTFS Feed Manager.
 
 Handles downloading, updating, and managing GTFS feed data.
 """
@@ -83,11 +83,22 @@ class GTFSFeedManager:
             raise GTFSValidationError(f"Invalid GTFS data in {feed_id}") from e
     
     def get_feed(self, feed_id: str) -> Optional[GTFSFeed]:
-        ""Get a loaded GTFS feed by ID.""
+        """Get a loaded GTFS feed by ID.
+
+        Args:
+            feed_id: The ID of the feed to retrieve
+
+        Returns:
+            Optional[GTFSFeed]: The GTFS feed if found, None otherwise
+        """
         return self.feeds.get(feed_id)
     
     def list_feeds(self) -> List[Dict[str, str]]:
-        ""List all available feeds with metadata.""
+        """List all available feeds with metadata.
+
+        Returns:
+            List[Dict[str, str]]: A list of dictionaries containing feed metadata
+        """
         result = []
         for feed_id, feed in self.feeds.items():
             result.append({
@@ -100,7 +111,15 @@ class GTFSFeedManager:
         return result
     
     def _needs_update(self, feed_id: str, update_interval: int) -> bool:
-        ""Check if a feed needs to be updated.""
+        """Check if a feed needs to be updated.
+
+        Args:
+            feed_id: The ID of the feed to check
+            update_interval: The update interval in seconds
+
+        Returns:
+            bool: True if the feed needs to be updated, False otherwise
+        """
         last_update = self.last_updated.get(feed_id)
         if not last_update:
             return True
@@ -113,8 +132,20 @@ class GTFSFeedManager:
         feed_id: str, 
         url: str, 
         target_dir: Path
-    ) -> None:
-        ""Download and extract a GTFS feed.""
+    ) -> GTFSFeed:
+        """Download and extract a GTFS feed.
+        
+        Args:
+            feed_id: The ID of the feed to download
+            url: The URL to download the feed from
+            target_dir: The directory to extract the feed to
+            
+        Returns:
+            GTFSFeed: The loaded GTFS feed
+            
+        Raises:
+            GTFSValidationError: If the downloaded feed is invalid
+        """
         logger.info(f"Downloading GTFS feed from {url}")
         
         # Create a temporary directory for the download
@@ -156,9 +187,18 @@ class GTFSFeedManager:
                 shutil.move(str(item), str(target_dir / item.name))
         
         logger.info(f"Successfully updated feed {feed_id} from {url}")
+        return GTFSFeed(target_dir)
     
     async def _download_file(self, url: str, target_path: Path) -> None:
-        ""Download a file with progress and retries.""
+        """Download a file from a URL to the target path.
+        
+        Args:
+            url: The URL to download from
+            target_path: The local path to save the file to
+            
+        Raises:
+            Exception: If the download fails
+        """
         max_retries = 3
         timeout = aiohttp.ClientTimeout(total=300)  # 5 minutes
         
@@ -202,7 +242,11 @@ class GTFSFeedManager:
                 await asyncio.sleep(wait_time)
     
     async def close(self) -> None:
-        ""Clean up resources.""
+        """Close the feed manager and release resources.
+        
+        This method should be called when the feed manager is no longer needed
+        to ensure all resources are properly cleaned up.
+        """
         # Close any open resources here
         pass
 

@@ -1,4 +1,4 @@
-""
+"""
 GTFS Service Layer
 
 Provides GTFS functionality through FastMCP tools.
@@ -9,7 +9,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from fastmcp import FastMCP, mcp
+from fastmcp import FastMCP
+
+# The mcp decorator will be passed when the function is registered with FastMCP
+mcp = None  # Will be set when the service is initialized
 from pydantic import BaseModel, Field, HttpUrl
 
 from ..core.feed_manager import GTFSFeedManager, GTFSValidationError
