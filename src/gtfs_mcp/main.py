@@ -7,6 +7,7 @@ from typing import Optional
 from fastapi import FastAPI
 from fastmcp import FastMCP
 
+from .transport import run_server, run_server_async
 from .config import Settings, get_settings
 
 # Configure logging
@@ -58,9 +59,4 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     
-    uvicorn.run(
-        "gtfs_mcp.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-    )
+    run_server(uvicorn, server_name="gtfs-mcp")

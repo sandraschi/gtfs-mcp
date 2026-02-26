@@ -1,0 +1,36 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": ["sandraschi"],
+  "name": "gtfs-mcp",
+  "description": "FastMCP 2.10 server for downloading, parsing, and serving GTFS (General Transit Feed Specification) data. Transit data access with parser handling malformed feeds. Beta status.",
+  "type": "mcp_server",
+  "status": "beta",
+  "framework": "FastMCP 2.10",
+  "tools": 8,
+  "transport": ["stdio", "http", "websocket"],
+  "keywords": [
+    "gtfs",
+    "transit",
+    "public-transport",
+    "transportation",
+    "mcp-server",
+    "fastmcp"
+  ],
+  "features": {
+    "feed_management": {
+      "enabled": true
+    },
+    "parser": {
+      "enabled": true,
+      "note": "Handles malformed/missing data"
+    },
+    "realtime_updates": {
+      "enabled": true,
+      "method": "WebSocket"
+    },
+    "geospatial_queries": {
+      "enabled": true
+    }
+  }
+}
+

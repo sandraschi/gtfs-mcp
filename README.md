@@ -21,30 +21,28 @@ inconsistencies of real-world GTFS feeds.
 - Python 3.10+
 - pip (Python package manager)
 
-### Installation
+## 🚀 Installation
 
-1. Clone the repository:
+### Prerequisites
+- [uv](https://docs.astral.sh/uv/) installed (RECOMMENDED)
+- Python 3.12+
 
-   ```bash
-   git clone https://github.com/sandraschi/gtfs-mcp.git
-   cd gtfs-mcp
-   ```
+### 📦 Quick Start
+Run immediately via `uvx`:
+```bash
+uvx gtfs-mcp
+```
 
-2. Install dependencies:
-
-   ```bash
-   pip install -e .
-   ```
-
-3. Create a `.env` file (optional):
-
-   ```env
-   GTFS_MCP_HOST=0.0.0.0
-   GTFS_MCP_PORT=8000
-   GTFS_MCP_DEBUG=true
-   GTFS_MCP_DATA_DIR=./data
-   ```
-
+### 🎯 Claude Desktop Integration
+Add to your `claude_desktop_config.json`:
+```json
+"mcpServers": {
+  "gtfs-mcp": {
+    "command": "uv",
+    "args": ["--directory", "D:/Dev/repos/gtfs-mcp", "run", "gtfs-mcp"]
+  }
+}
+```
 ### Running the Server
 
 ```bash

@@ -9,7 +9,7 @@ description = "FastMCP 2.10 compliant GTFS server for transit data"
 authors = [
     { name = "Sandra Schilling", email = "sandra@example.com" },
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -18,14 +18,20 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 dependencies = [
-    "fastmcp>=2.10.0",
+    "fastmcp>=2.14.5",
     "aiohttp>=3.8.0",
     "pydantic>=2.0.0",
-    "aiosqlite>=0.18.0",
+    "aiosqlite>=0.19.0",
     "python-dateutil>=2.8.0",
     "pytz>=2022.0",
     "fastapi>=0.95.0",
     "uvicorn>=0.21.0",
+    "aiofiles>=23.1.0",
+    "python-dotenv>=1.0.0",
+    "sqlalchemy>=2.0.0",
+    "requests>=2.31.0",
+    "beautifulsoup4>=4.12.0",
+    "ruff>=0.15.2",
 ]
 
 [project.optional-dependencies]
@@ -53,3 +59,15 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 check_untyped_defs = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "S"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
