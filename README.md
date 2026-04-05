@@ -21,19 +21,19 @@ inconsistencies of real-world GTFS feeds.
 - Python 3.10+
 - pip (Python package manager)
 
-## 🚀 Installation
+##  Installation
 
 ### Prerequisites
 - [uv](https://docs.astral.sh/uv/) installed (RECOMMENDED)
 - Python 3.12+
 
-### 📦 Quick Start
+###  Quick Start
 Run immediately via `uvx`:
 ```bash
 uvx gtfs-mcp
 ```
 
-### 🎯 Claude Desktop Integration
+###  Claude Desktop Integration
 Add to your `claude_desktop_config.json`:
 ```json
 "mcpServers": {
@@ -96,17 +96,17 @@ curl "http://localhost:8000/v1/stops/12345/departures?feed_id=my-feed&limit=5"
 
 ```text
 gtfs-mcp/
-├── src/
-│   └── gtfs_mcp/           # Main package
-│       ├── __init__.py     # Package initialization
-│       ├── main.py         # FastAPI application
-│       ├── config.py       # Configuration management
-│       ├── api/            # API endpoints
-│       ├── core/           # Core functionality
-│       └── services/       # Business logic
-├── tests/                  # Test suite
-├── pyproject.toml          # Project metadata and dependencies
-└── README.md               # This file
+ src/
+    gtfs_mcp/           # Main package
+        __init__.py     # Package initialization
+        main.py         # FastAPI application
+        config.py       # Configuration management
+        api/            # API endpoints
+        core/           # Core functionality
+        services/       # Business logic
+ tests/                  # Test suite
+ pyproject.toml          # Project metadata and dependencies
+ README.md               # This file
 ```
 
 ### Running Tests

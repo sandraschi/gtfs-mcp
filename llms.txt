@@ -1,0 +1,32 @@
+# gtfs-mcp
+> This directory contains documentation related to achieving GLAMA AI Gold standard status for the Advanced Memory MCP project. GLAMA AI is a quality assurance platform that evaluates MCP servers agains...
+
+This project includes automated llms.txt generation for AI accessibility.
+
+## Docs
+- [Readme](docs\glama\README.md): This directory contains documentation related to achieving GLAMA AI Gold standard status for the Adv...
+- [Readme](README.md): A FastMCP 2.10 compliant server for downloading, parsing, and serving GTFS
+- [Readme](docs\mcpb-packaging\README.md): **Complete guide to packaging and distributing MCP servers with MCPB**
+- [Readme](docs\github\README.md): > **Purpose**: Comprehensive GitHub configuration guide to avoid hours of trial-and-error setup.
+- [Complete Setup Guide](docs\github\COMPLETE_SETUP_GUIDE.md): > **6 hours of pain distilled into 30 minutes of setup**
+- [Mcp Production Checklist](docs\MCP_PRODUCTION_CHECKLIST.md): Use this checklist to audit any MCP server repo before marking it production-ready.
+- [Megatest Three Use Cases](docs\testing\MEGATEST_THREE_USE_CASES.md): The megatest framework serves **three distinct audiences** with different needs:
+- [Task Note](TASK_NOTE.md): A FastMCP 2.10-compliant server for downloading, parsing, and serving GTFS
+- [Serena Copy To Other Repos](docs\serena\SERENA_COPY_TO_OTHER_REPOS.md): **Use this to add Serena to any other repo (myai, veogen, etc.)**
+- [Glama Ai Requirements](docs\glama\GLAMA_AI_REQUIREMENTS.md): This document outlines the requirements and recommendations for listing Advanced Memory MCP on Glama...
+
+## Api
+- [Realtime](src\gtfs_mcp\api\endpoints\realtime.py): Api definitions and implementations
+- [Routes](src\gtfs_mcp\api\v1\endpoints\routes.py): Api definitions and implementations
+- [  Init  ](src\gtfs_mcp\api\v1\endpoints\__init__.py): Api definitions and implementations
+- [Realtime](src\gtfs_mcp\api\endpoints\realtime.py): Endpoints definitions and implementations
+- [Routes](src\gtfs_mcp\api\v1\endpoints\routes.py): Endpoints definitions and implementations
+- [  Init  ](src\gtfs_mcp\api\v1\endpoints\__init__.py): Endpoints definitions and implementations
+- [Routes](src\gtfs_mcp\api\v1\endpoints\routes.py): Routes definitions and implementations
+- [Gtfs Realtime](src\gtfs_mcp\models\gtfs_realtime.py): Models definitions and implementations
+- [Models](src\gtfs_mcp\db\models.py): Models definitions and implementations
+
+## Configuration
+- [Pyproject](pyproject.toml): Python project configuration and dependencies
+- [Package](web_sota\package.json): Node.js project configuration and dependencies
+- [Config](.git\config): Application configuration files
