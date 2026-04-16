@@ -4,6 +4,7 @@ src/gtfs_mcp/__init__.py
 src/gtfs_mcp/config.py
 src/gtfs_mcp/config_fixed.py
 src/gtfs_mcp/main.py
+src/gtfs_mcp/server.py
 src/gtfs_mcp/transport.py
 src/gtfs_mcp.egg-info/.markdownlint.json
 src/gtfs_mcp.egg-info/PKG-INFO

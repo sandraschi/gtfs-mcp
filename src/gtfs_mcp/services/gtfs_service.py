@@ -5,21 +5,18 @@ Provides GTFS functionality through FastMCP tools.
 """
 
 import asyncio
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from fastmcp import FastMCP
-
-# The mcp decorator will be passed when the function is registered with FastMCP
-mcp = None  # Will be set when the service is initialized
 from pydantic import BaseModel, Field, HttpUrl
 
+from .. import mcp
 from ..core.feed_manager import GTFSFeedManager, GTFSValidationError
 from ..core.gtfs_parser import GTFSFeed
 
-# Initialize FastMCP instance
-mcp = FastMCP.get_instance()
+logger = logging.getLogger(__name__)
 
 # Initialize feed manager
 feed_manager: Optional[GTFSFeedManager] = None

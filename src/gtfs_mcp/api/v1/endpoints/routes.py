@@ -1,4 +1,4 @@
-""
+"""
 GTFS MCP API v1 Routes
 
 This module contains the FastAPI route definitions for the GTFS MCP API v1.
@@ -7,7 +7,7 @@ This module contains the FastAPI route definitions for the GTFS MCP API v1.
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, HttpUrl
 
 from ....services.gtfs_service import (
@@ -80,7 +80,7 @@ async def find_stops(
 @router.get("/stops/{stop_id}", response_model=StopResponse)
 async def get_stop_info(
     feed_id: str = Query(..., description="ID of the GTFS feed"),
-    stop_id: str = Query(..., description="ID of the stop")
+    stop_id: str = Path(..., description="ID of the stop"),
 ):
     """Get information about a specific stop."""
     stop_info = await get_stop_info_service(feed_id, stop_id)
@@ -97,9 +97,9 @@ async def get_stop_info(
 @router.get("/stops/{stop_id}/departures", response_model=DeparturesResponse)
 async def get_departures(
     feed_id: str = Query(..., description="ID of the GTFS feed"),
-    stop_id: str = Query(..., description="ID of the stop"),
+    stop_id: str = Path(..., description="ID of the stop"),
     route_id: Optional[str] = Query(None, description="Filter by route ID"),
-    limit: int = Query(5, description="Maximum number of departures to return")
+    limit: int = Query(5, description="Maximum number of departures to return"),
 ):
     """Get upcoming departures for a stop."""
     departures = await get_departures_service(feed_id, stop_id, route_id, limit)
