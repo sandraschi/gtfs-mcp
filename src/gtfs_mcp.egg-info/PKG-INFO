@@ -1,7 +1,7 @@
 Metadata-Version: 2.4
 Name: gtfs-mcp
 Version: 0.1.0
-Summary: FastMCP 2.10 compliant GTFS server for transit data
+Summary: FastMCP 3.1.0 compliant GTFS server for transit data
 Author-email: Sandra Schilling <sandra@example.com>
 Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Developers

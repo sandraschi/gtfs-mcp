@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gtfs-mcp"
 version = "0.1.0"
-description = "FastMCP 2.10 compliant GTFS server for transit data"
+description = "FastMCP 3.1.0 compliant GTFS server for transit data"
 authors = [
     { name = "Sandra Schilling", email = "sandra@example.com" },
 ]

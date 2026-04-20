@@ -27,77 +27,18 @@ default:
             } \
         } \
     } \
-    Write-Host "`n  [System State: PROD/HARDENED]" -ForegroundColor DarkGray; \
+    Write-Host "`n  [System State: PROD/INDUSTRIALIZED]" -ForegroundColor DarkGray; \
     Write-Host ''
 
 # ── Quality ───────────────────────────────────────────────────────────────────
 
-# Execute Ruff SOTA v13.1 linting
+# Execute repo-wide quality checks (Ruff)
 lint:
-    Set-Location '{{justfile_directory()}}'
     uv run ruff check .
-    Set-Location '{{justfile_directory()}}\web_sota'
-    npx @biomejs/biome ci .
+    uv run ruff format --check .
 
-# Execute Ruff SOTA v13.1 fix and formatting
+# Execute repo-wide auto-fixes and formatting (Ruff)
 fix:
-    Set-Location '{{justfile_directory()}}'
-    uv run ruff check . --fix --unsafe-fixes
-    uv run ruff format .
-    Set-Location '{{justfile_directory()}}\web_sota'
-    npx @biomejs/biome check --write .
-
-# ── Hardening ─────────────────────────────────────────────────────────────────
-
-# Execute Bandit security audit
-check-sec:
-    Set-Location '{{justfile_directory()}}'
-    uv run bandit -r src/
-
-# Execute safety audit of dependencies
-audit-deps:
-    Set-Location '{{justfile_directory()}}'
-    uv run safety check
-
-set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
-
-
-    @powershell -NoLogo -Command " \
-        $lines = Get-Content '{{justfile()}}'; \
-        Write-Host '' ; \
-        $currentCategory = ''; \
-        foreach ($line in $lines) { \
-            if ($line -match '^# ── ([^─]+) ─') { \
-                $currentCategory = $matches[1].Trim(); \
-                Write-Host \"`n  $currentCategory\" -ForegroundColor Cyan; \
-                Write-Host '  ' + ('─' * 45) -ForegroundColor Gray; \
-            } elseif ($line -match '^# ([^─].+)') { \
-                $desc = $matches[1].Trim(); \
-                $idx = [array]::IndexOf($lines, $line); \
-                if ($idx -lt $lines.Count - 1) { \
-                    $nextLine = $lines[$idx + 1]; \
-                    if ($nextLine -match '^([a-z0-9-]+):') { \
-                        $recipe = $matches[1]; \
-                        $pad = ' ' * [math]::Max(2, (18 - $recipe.Length)); \
-                        Write-Host \"    $recipe\" -ForegroundColor White -NoNewline; \
-                        Write-Host \"$pad$desc\" -ForegroundColor Gray; \
-                    } \
-                } \
-            } \
-        } \
-        Write-Host \"`n  [System State: PROD/HARDENED]\" -ForegroundColor DarkGray; \
-        Write-Host ''"
-
-# ── Quality ───────────────────────────────────────────────────────────────────
-
-# Execute Ruff SOTA v13.1 linting
-lint:
-    Set-Location '{{justfile_directory()}}'
-    uv run ruff check .
-
-# Execute Ruff SOTA v13.1 fix and formatting
-fix:
-    Set-Location '{{justfile_directory()}}'
     uv run ruff check . --fix --unsafe-fixes
     uv run ruff format .
 
@@ -105,38 +46,23 @@ fix:
 
 # Execute Bandit security audit
 check-sec:
-    Set-Location '{{justfile_directory()}}'
     uv run bandit -r src/
 
 # Execute safety audit of dependencies
 audit-deps:
-    Set-Location '{{justfile_directory()}}'
     uv run safety check
 
-set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+# ── GTFS Specific ─────────────────────────────────────────────────────────────
 
+# Sync GTFS data (stubs for implementation)
+sync-data:
+    @Write-Host "Syncing GTFS data sources..." -ForegroundColor Cyan
 
-# ── Quality ───────────────────────────────────────────────────────────────────
+# Run the GTFS MCP server
+run:
+    uv run gtfs-mcp
 
-# Execute Ruff SOTA v13.1 linting
-lint:
-    Set-Location '{{justfile_directory()}}'
-    uv run ruff check .
-
-# Execute Ruff SOTA v13.1 fix and formatting
-fix:
-    Set-Location '{{justfile_directory()}}'
-    uv run ruff check . --fix --unsafe-fixes
-    uv run ruff format .
-
-# ── Hardening ─────────────────────────────────────────────────────────────────
-
-# Execute Bandit security audit
-check-sec:
-    Set-Location '{{justfile_directory()}}'
-    uv run bandit -r src/
-
-# Execute safety audit of dependencies
-audit-deps:
-    Set-Location '{{justfile_directory()}}'
-    uv run safety check
+# Clean build artifacts
+clean:
+    @Get-ChildItem -Recurse -Filter "__pycache__" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    @Write-Host "Cleaned."

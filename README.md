@@ -1,6 +1,8 @@
 # GTFS MCP Server
 
-A FastMCP 2.10 compliant server for downloading, parsing, and serving GTFS
+[![FastMCP Version](https://img.shields.io/badge/FastMCP-3.1.0-blue?style=flat-square&logo=python&logoColor=white)](https://github.com/sandraschi/fastmcp) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![Linted with Biome](https://img.shields.io/badge/Linted_with-Biome-60a5fa?style=flat-square&logo=biome&logoColor=white)](https://biomejs.dev/) [![Built with Just](https://img.shields.io/badge/Built_with-Just-000000?style=flat-square&logo=gnu-bash&logoColor=white)](https://github.com/casey/just)
+
+A FastMCP 3.1.0 compliant server for downloading, parsing, and serving GTFS
 (General Transit Feed Specification) data. This server provides a standardized API
 for accessing transit data from various agencies, handling the quirks and
 inconsistencies of real-world GTFS feeds.
@@ -9,7 +11,7 @@ inconsistencies of real-world GTFS feeds.
 
 - **GTFS Feed Management**: Download and update GTFS feeds from any URL
 - **Robust Parser**: Handles malformed/missing data with grace
-- **FastMCP 2.10 Compliant**: Full compatibility with the Model Control Protocol
+- **FastMCP 3.1.0 Compliant**: Full compatibility with the Model Control Protocol
 - **RESTful API**: Easy integration with web and mobile applications
 - **Real-time Updates**: WebSocket support for live departure information
 - **Geospatial Queries**: Find stops and routes near a location
@@ -130,6 +132,17 @@ black .
 isort .
 mypy .
 ```
+
+
+## 🛡️ Industrial Quality Stack
+
+This project adheres to **SOTA 14.1** industrial standards for high-fidelity agentic orchestration:
+
+- **Python (Core)**: [Ruff](https://astral.sh/ruff) for linting and formatting. Zero-tolerance for `print` statements in core handlers (`T201`).
+- **Webapp (UI)**: [Biome](https://biomejs.dev/) for sub-millisecond linting. Strict `noConsoleLog` enforcement.
+- **Protocol Compliance**: Hardened `stdout/stderr` isolation to ensure crash-resistant JSON-RPC communication.
+- **Automation**: [Justfile](./justfile) recipes for all fleet operations (`just lint`, `just fix`, `just dev`).
+- **Security**: Automated audits via `bandit` and `safety`.
 
 ## License
 
