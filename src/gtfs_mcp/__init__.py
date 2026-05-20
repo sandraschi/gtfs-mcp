@@ -14,9 +14,11 @@ Key Features:
 """
 
 import logging
+import os
 from pathlib import Path
 
 from fastmcp import FastMCP
+from fastmcp.server import create_proxy
 from fastmcp.server.lifespan import lifespan
 
 __version__ = "0.1.0"
@@ -57,6 +59,14 @@ mcp = FastMCP(
     instructions="GTFS data server with FastMCP 2.10",
     lifespan=_gtfs_mcp_lifespan,
 )
+
+# MCP Bridge: proxy to external MCP servers via MCP_BRIDGE_URLS env var
+_bridge_urls = os.environ.get("MCP_BRIDGE_URLS", "")
+if _bridge_urls:
+    for _bu in _bridge_urls.split(","):
+        _bu = _bu.strip()
+        if _bu:
+            mcp.add_provider(create_proxy(_bu))
 
 # Import service module so @mcp.tool() registrations run (after `mcp` exists).
 # REST HTTP routes are mounted on the FastAPI app in gtfs_mcp.main (FastMCP 3 has no include_router).
