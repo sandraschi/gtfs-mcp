@@ -7,6 +7,9 @@
   <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.2-7c5cfc?style=flat-square" alt="FastMCP"></a>
 </p>
 
+
+> 📖 **[Installation Guide](INSTALL.md)** — quick start, manual setup, and troubleshooting
+
 A FastMCP 3.1.0 compliant server for downloading, parsing, and serving GTFS
 (General Transit Feed Specification) data. This server provides a standardized API
 for accessing transit data from various agencies, handling the quirks and
