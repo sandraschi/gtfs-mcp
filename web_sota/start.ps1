@@ -10,8 +10,8 @@ $WindowStyle = if ($Headless) { 'Hidden' } else { 'Normal' }
 # ------------------------------
 
 # Webapp Start - Standardized SOTA (Auto-Repaired V2.5)
-$WebPort = 10897
-$BackendPort = 10898
+$WebPort = 10912
+$BackendPort = 10913
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 
 # 1. Kill any process squatting on the ports
@@ -45,7 +45,7 @@ Start-Process powershell -ArgumentList "-NoProfile", "-WindowStyle", "Hidden", "
 
 Write-Host "Browser will open automatically when Vite is ready." -ForegroundColor Gray
 if ($SkipFrontend) { return }
-npm run dev -- --port $WebPort --host
+npm run dev -- --port $WebPort --host 127.0.0.1 --strictPort
 
 
 
