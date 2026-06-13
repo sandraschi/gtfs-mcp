@@ -47,9 +47,9 @@ If you prefer not to use `just`:
    uv run python -m gtfs_mcp.server
 
    # HTTP mode (for web dashboard)
-   uv run uvicorn gtfs_mcp.server:app --port 10922
+   uv run uvicorn gtfs_mcp.server:app --port 10913
    ```
-5. Open `http://localhost:10922` or the frontend URL.
+5. Open `http://127.0.0.1:10912` (frontend) or `http://127.0.0.1:10913/health` (backend).
 
 ---
 
