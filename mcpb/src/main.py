@@ -1,12 +1,12 @@
-""GTFS MCP Server - Main application entry point."""
+"""GTFS MCP Server - Main application entry point."""
 
 import logging
-from pathlib import Path
-from typing import Optional
 
 from fastapi import FastAPI
-from fastmcp import FastMCP
 
+from . import mcp
+from .api.v1.endpoints.routes import api_router
+from .transport import run_server, run_server_async
 from .config import Settings, get_settings
 
 # Configure logging
@@ -23,15 +23,10 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Initialize FastMCP
-mcp = FastMCP(
-    name="gtfs-mcp",
-    version="0.1.0",
-    description="GTFS data server with FastMCP 2.10",
-)
+app.include_router(api_router)
 
-# Mount MCP app
-app.mount("/mcp", mcp.app)
+# Mount MCP Streamable HTTP app (FastMCP 3: use http_app(), not .app)
+app.mount("/mcp", mcp.http_app(path="/"))
 
 # Initialize settings
 settings = get_settings()
@@ -58,9 +53,4 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     
-    uvicorn.run(
-        "gtfs_mcp.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-    )
+    run_server(uvicorn, server_name="gtfs-mcp")

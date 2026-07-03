@@ -1,0 +1,22 @@
+{
+  "manifest_version": "0.2",
+  "name": "gtfs-mcp",
+  "version": "0.1.0",
+  "description": "FastMCP 3.1.0 compliant GTFS server for transit data",
+  "author": { "name": "sandraschi" },
+  "server": {
+    "type": "python",
+    "entry_point": "src/gtfs_mcp/server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run","--directory","${PWD}","python","-m","gtfs_mcp"],
+      "env": {
+        "PYTHONPATH": "${PWD}/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  },
+  "tools": [
+    { "name": "add_feed", "description": "add_feed" }
+  ]
+}

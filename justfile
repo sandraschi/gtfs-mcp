@@ -1,4 +1,5 @@
-﻿set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+import 'scripts/just/fleet.just'
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 
@@ -42,4 +43,3 @@ run:
 clean:
     @Get-ChildItem -Recurse -Filter "__pycache__" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
     @Write-Host "Cleaned."
-
