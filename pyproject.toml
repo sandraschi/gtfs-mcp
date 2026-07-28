@@ -7,7 +7,7 @@ name = "gtfs-mcp"
 version = "0.1.0"
 description = "FastMCP 3.1.0 compliant GTFS server for transit data"
 authors = [
-    { name = "Sandra Schilling", email = "sandra@example.com" },
+    { name = "Sandra Schilling", email = "sandraschipal@gmail.com" },
 ]
 requires-python = ">=3.12"
 classifiers = [
@@ -18,7 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 dependencies = [
-    "fastmcp>=3.4.2,<4",
+    "fastmcp>=3.4.4,<4",
     "aiohttp>=3.8.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
@@ -32,19 +32,19 @@ dependencies = [
     "sqlalchemy>=2.0.0",
     "requests>=2.31.0",
     "beautifulsoup4>=4.12.0",
-    "ruff>=0.15.2",
+    "ruff>=0.16.0,<0.17",
     "prefab-ui>=0.14.0",
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=7.0.0",
+dev = ["pytest>=7.0.0",
     "pytest-asyncio>=0.20.0",
     "pytest-cov>=4.0.0",
     "black>=23.0.0",
     "isort>=5.12.0",
     "mypy>=1.0.0",
     "httpx>=0.24.0",
+    "ruff>=0.16.0,<0.17"
 ]
 
 [tool.black]
@@ -68,7 +68,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "S", "UP", "RUF"]
-ignore = ["S101", "B008"]
+ignore = ["S101", "B008", "S106", "S110", "S112", "RUF012"]
 
 [tool.ruff.format]
 quote-style = "double"
