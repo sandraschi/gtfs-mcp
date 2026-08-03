@@ -5,7 +5,9 @@ def test_feed_model(test_db):
     """Test creating a Feed model instance."""
     from gtfs_mcp.db.models import Feed
 
-    feed = Feed(id=1, name="Wiener Linien", url="https://example.com/gtfs.zip", default_city="Vienna", update_interval=3600)
+    feed = Feed(
+        id=1, name="Wiener Linien", url="https://example.com/gtfs.zip", default_city="Vienna", update_interval=3600
+    )
 
     test_db.add(feed)
     test_db.commit()
@@ -39,9 +41,7 @@ def test_feed_version_model(test_db):
     test_db.add(feed)
     test_db.commit()
 
-    version = FeedVersion(
-        feed_id=1, version="2026-01", is_current=True, download_url="https://example.com/gtfs.zip"
-    )
+    version = FeedVersion(feed_id=1, version="2026-01", is_current=True, download_url="https://example.com/gtfs.zip")
     test_db.add(version)
     test_db.commit()
 
@@ -55,7 +55,11 @@ def test_feed_discovery_log_model(test_db):
     from gtfs_mcp.db.models import FeedDiscoveryLog
 
     entry = FeedDiscoveryLog(
-        source="MobilityData", url="https://database.mobilitydata.org/feeds.json", status="success", feeds_found=5, metadata_="{}"
+        source="MobilityData",
+        url="https://database.mobilitydata.org/feeds.json",
+        status="success",
+        feeds_found=5,
+        metadata_="{}",
     )
     test_db.add(entry)
     test_db.commit()

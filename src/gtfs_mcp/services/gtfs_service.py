@@ -321,12 +321,17 @@ async def initialize_gtfs_service(data_dir: Path) -> None:
     try:
         feed_manager = GTFSFeedManager(data_dir)
         logger.info("GTFS service initialized successfully")
-        # Optionally load the configured default feed (GTFS_MCP_DEFAULT_FEED_URL).
+
+        # Restore persisted feeds from SQLite (no re-download).
+        await feed_manager.load_all_from_db()
+
+        # Optionally load the configured default feed
+        # (GTFS_MCP_DEFAULT_FEED_URL - defaults to the Wiener Linien feed).
         # Failures here are logged, not fatal - the user can add feeds later.
         from ..config import get_settings
 
         default_url = get_settings().default_feed_url
-        if default_url:
+        if default_url and "default" not in feed_manager.feeds:
             try:
                 await feed_manager.add_feed("default", str(default_url))
             except Exception as e:

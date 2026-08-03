@@ -43,6 +43,28 @@ class GTFSFeed:
         self.feed_info: dict[str, Any] = {}
         self.loaded = False
 
+    @classmethod
+    def from_rows(cls, rows: dict[str, list[dict]]) -> "GTFSFeed":
+        """Reconstruct a feed from persisted row tables (SQLite restore path).
+
+        Accepts the same table layout as GTFSFeed.load() produces:
+        agencies, stops, routes, trips, stop_times, calendar, calendar_dates,
+        feed_info (list with a single dict).
+        """
+        feed = cls(Path("."))
+        feed.agencies = list(rows.get("agencies", []))
+        feed.stops = list(rows.get("stops", []))
+        feed.routes = list(rows.get("routes", []))
+        feed.trips = list(rows.get("trips", []))
+        feed.stop_times = list(rows.get("stop_times", []))
+        feed.calendar = list(rows.get("calendar", []))
+        feed.calendar_dates = list(rows.get("calendar_dates", []))
+        info = rows.get("feed_info") or []
+        feed.feed_info = dict(info[0]) if info else {}
+        feed._build_indices()
+        feed.loaded = True
+        return feed
+
     def load(self) -> None:
         """Load all GTFS data from the feed directory."""
         if self.loaded:

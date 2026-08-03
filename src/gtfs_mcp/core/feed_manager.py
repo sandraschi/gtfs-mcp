@@ -17,14 +17,20 @@ import aiohttp
 from aiohttp import ClientError, ClientSession
 
 from .gtfs_parser import GTFSFeed, GTFSValidationError
+from .persistence import GTFSPersistence
 
 logger = logging.getLogger(__name__)
 
 
 class GTFSFeedManager:
-    """Manages GTFS feed downloads and updates."""
+    """Manages GTFS feed downloads and updates.
 
-    def __init__(self, data_dir: Path, cache_dir: Path | None = None):
+    Parsed feed data is persisted to SQLite (``data/gtfs_mcp.db``) and restored
+    from it on restart, so feeds are not re-downloaded every time the server
+    starts.
+    """
+
+    def __init__(self, data_dir: Path, cache_dir: Path | None = None, persist: bool = True):
         """Initialize with data and cache directories."""
         self.data_dir = Path(data_dir).resolve()
         self.cache_dir = Path(cache_dir or self.data_dir / "cache").resolve()
@@ -36,11 +42,88 @@ class GTFSFeedManager:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
+        self._persistence: GTFSPersistence | None = GTFSPersistence(self.data_dir / "gtfs_mcp.db") if persist else None
+
+    async def _ensure_persistence(self) -> GTFSPersistence | None:
+        if self._persistence is not None and not getattr(self._persistence, "_initialized", False):
+            await self._persistence.init()
+            self._persistence._initialized = True
+        return self._persistence
+
+    def _table_rows(self, feed: GTFSFeed) -> dict[str, list[dict]]:
+        return {
+            "agencies": feed.agencies,
+            "stops": feed.stops,
+            "routes": feed.routes,
+            "trips": feed.trips,
+            "stop_times": feed.stop_times,
+            "calendar": feed.calendar,
+            "calendar_dates": feed.calendar_dates,
+            "feed_info": [feed.feed_info] if feed.feed_info else [],
+        }
+
+    async def _persist_feed(self, feed_id: str, url: str, feed: GTFSFeed) -> None:
+        store = await self._ensure_persistence()
+        if store is None:
+            return
+        try:
+            await store.save_feed(feed_id, url, self._table_rows(feed))
+        except Exception as e:
+            logger.warning("Could not persist feed %s to SQLite: %s", feed_id, e)
+
+    async def _load_from_db(self, feed_id: str, url: str | None = None) -> GTFSFeed | None:
+        store = await self._ensure_persistence()
+        if store is None:
+            return None
+        try:
+            loaded = await store.load_feed(feed_id)
+        except Exception as e:
+            logger.warning("Could not read feed %s from SQLite: %s", feed_id, e)
+            return None
+        if loaded is None:
+            return None
+        rows, snap = loaded
+        if url and snap.url and url != snap.url:
+            # The feed moved to a different URL - a refresh is required.
+            return None
+        try:
+            feed = GTFSFeed.from_rows(rows)
+            self.last_updated[feed_id] = snap.fetched_at
+            logger.info("Restored feed %s from SQLite (%d rows)", feed_id, snap.row_count)
+            return feed
+        except Exception as e:
+            logger.warning("Could not reconstruct feed %s from SQLite: %s", feed_id, e)
+            return None
+
+    async def load_all_from_db(self) -> int:
+        """Restore every stored feed into memory (startup path)."""
+        store = await self._ensure_persistence()
+        if store is None:
+            return 0
+        try:
+            snapshots = await store.list_snapshots()
+        except Exception as e:
+            logger.warning("Could not list SQLite feed snapshots: %s", e)
+            return 0
+        loaded = 0
+        for snap in snapshots:
+            feed = await self._load_from_db(snap["feed_id"])
+            if feed is not None:
+                self.feeds[snap["feed_id"]] = feed
+                self.update_intervals.setdefault(snap["feed_id"], 86400)
+                loaded += 1
+        if loaded:
+            logger.info("Restored %d feed(s) from SQLite", loaded)
+        return loaded
+
     async def add_feed(
         self, feed_id: str, url: str, update_interval: int = 3600, force_update: bool = False
     ) -> GTFSFeed:
         """
         Add a new GTFS feed or update an existing one.
+
+        When the feed was already parsed and stored in SQLite (and no forced
+        update is requested), the cached copy is restored without a download.
 
         Args:
             feed_id: Unique identifier for the feed
@@ -53,6 +136,19 @@ class GTFSFeedManager:
         """
         feed_dir = self.data_dir / feed_id
         feed_dir.mkdir(exist_ok=True)
+
+        # Fresh in memory and not expired - reuse it.
+        in_memory = self.feeds.get(feed_id)
+        if not force_update and in_memory and not self._needs_update(feed_id, update_interval):
+            return in_memory
+
+        # Not forced: try the SQLite cache before hitting the network.
+        if not force_update:
+            cached = await self._load_from_db(feed_id, url)
+            if cached is not None:
+                self.feeds[feed_id] = cached
+                self.update_intervals[feed_id] = update_interval
+                return cached
 
         # Check if we need to update the feed
         needs_update = force_update or self._needs_update(feed_id, update_interval)
@@ -73,6 +169,7 @@ class GTFSFeedManager:
         try:
             feed.load()
             self.feeds[feed_id] = feed
+            await self._persist_feed(feed_id, url, feed)
             return feed
         except Exception as e:
             logger.error(f"Failed to load feed {feed_id}: {e!s}")
@@ -104,6 +201,8 @@ class GTFSFeedManager:
                     "stops": len(feed.stops) if feed.loaded else 0,
                     "routes": len(feed.routes) if feed.loaded else 0,
                     "trips": len(feed.trips) if feed.loaded else 0,
+                    "stop_times": len(feed.stop_times) if feed.loaded else 0,
+                    "status": "loaded",
                 }
             )
         return result
@@ -239,8 +338,12 @@ class GTFSFeedManager:
         This method should be called when the feed manager is no longer needed
         to ensure all resources are properly cleaned up.
         """
-        # Close any open resources here
-        pass
+        if self._persistence is not None:
+            try:
+                await self._persistence.close()
+            except Exception as e:
+                logger.warning("Persistence close failed: %s", e)
+            self._persistence = None
 
     async def __aenter__(self):
         return self

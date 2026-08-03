@@ -6,7 +6,7 @@ settings for the database, caching, logging, and other application settings.
 
 from pathlib import Path
 
-from pydantic import Field, HttpUrl, field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -119,7 +119,7 @@ class Settings(BaseSettings):
     discovery: FeedDiscoverySettings = Field(default_factory=FeedDiscoverySettings)
 
     # GTFS settings
-    default_feed_url: HttpUrl | None = None
+    default_feed_url: str | None = "https://www.wienerlinien.at/ogd_realtime/doku/ogd/gtfs/gtfs.zip"
     update_interval: int = 86400  # 24 hours
     max_feed_size_mb: int = 200  # Maximum feed size in MB
 
