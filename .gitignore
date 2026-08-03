@@ -88,7 +88,6 @@ _dashboard/
 # Fleet audit reports (regenerable snapshots)
 reports/
 *.ghaudit-timestamp
-.assess-fix-timestamp
 
 # Node (web_sota)
 node_modules/
