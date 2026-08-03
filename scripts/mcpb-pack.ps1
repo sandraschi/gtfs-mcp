@@ -21,9 +21,19 @@ if (-not (Test-Path manifest.json)) {
 if (-not (Test-Path .mcpbignore)) {
     $lines = "tests/",".git/","__pycache__/","*.pyc",".venv/","dist/","build/","target/"
     $lines += "web_sota/node_modules/","web_sota/dist/","node_modules/"
-    $lines += ".ruff_cache/",".pytest_cache/",".coverage",".snapshots/","*.bak"
+    $lines += ".ruff_cache/",".pytest_cache/",".coverage",".snapshots/","*.bak","*.bak.*"
+    $lines += "mcpb/","cache/","data/","reports/"
     $lines | Set-Content .mcpbignore -Encoding utf8
     Write-Host "  Generated .mcpbignore" -ForegroundColor Yellow
 }
+
+# Fresh stage: wipe + recopy src/ -> mcpb/src/ before pack (stale-bundle prevention)
+Write-Host "  Staging mcpb/src from src/..." -ForegroundColor Yellow
+if (Test-Path mcpb/src) { Remove-Item mcpb/src -Recurse -Force }
+New-Item -ItemType Directory -Force -Path mcpb/src | Out-Null
+Copy-Item src/* mcpb/src/ -Recurse -Force
+Get-ChildItem mcpb/src -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+Get-ChildItem mcpb/src -Recurse -Filter "*.pyc" | Remove-Item -Force -ErrorAction SilentlyContinue
+
 npx --yes @anthropic-ai/mcpb pack $RepoRoot "$RepoRoot/dist/$name-v$ver.mcpb"
 Write-Host "Bundle: $RepoRoot/dist/$name-v$ver.mcpb"

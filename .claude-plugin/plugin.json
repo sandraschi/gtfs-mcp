@@ -1,0 +1,6 @@
+{
+  "name": "gtfs-mcp",
+  "version": "0.1.0",
+  "description": "Session context injection for GTFS MCP",
+  "hooks": "../hooks/hooks.json"
+}

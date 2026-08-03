@@ -5,7 +5,6 @@ settings for the database, caching, logging, and other application settings.
 """
 
 from pathlib import Path
-from typing import Optional
 
 from pydantic import Field, HttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -51,10 +50,10 @@ class FeedDiscoverySettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="GTFS_MCP_DISCOVERY_")
 
     # API keys for feed discovery services
-    transitfeeds_api_key: Optional[str] = None
-    tokyo_metro_api_key: Optional[str] = None
-    mta_api_key: Optional[str] = None
-    lta_datamall_api_key: Optional[str] = None
+    transitfeeds_api_key: str | None = None
+    tokyo_metro_api_key: str | None = None
+    mta_api_key: str | None = None
+    lta_datamall_api_key: str | None = None
 
     # Feed discovery interval (in seconds)
     discovery_interval: int = 86400  # 24 hours
@@ -86,16 +85,25 @@ class Settings(BaseSettings):
     openapi_url: str = "/openapi.json"
 
     # Server settings
-    host: str = "0.0.0.0"
-    port: int = 8000
+    host: str = "127.0.0.1"
+    port: int = 10913
     reload: bool = False
     workers: int = 1
 
-    # CORS settings
-    cors_origins: list[str] = ["*"]
+    # CORS settings (fleet standard - explicit origins + unconditional regex)
+    cors_origins: list[str] = [
+        "http://localhost:10912",
+        "http://127.0.0.1:10912",
+        "http://localhost:10913",
+        "http://127.0.0.1:10913",
+        "http://tauri.localhost",
+        "https://tauri.localhost",
+        "tauri://localhost",
+    ]
     cors_allow_credentials: bool = True
     cors_allow_methods: list[str] = ["*"]
     cors_allow_headers: list[str] = ["*"]
+    cors_allow_origin_regex: str = r"https?://(?:[a-zA-Z0-9-]+\.ts\.net|.*?\.tail-[a-f0-9]+\.ts\.net|tauri\.localhost|localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|100\.\d{1,3}\.\d{1,3}\.\d{1,3})(?::\d+)?$|^tauri://localhost$"
 
     # Data storage
     data_dir: Path = Path("data")
@@ -111,7 +119,7 @@ class Settings(BaseSettings):
     discovery: FeedDiscoverySettings = Field(default_factory=FeedDiscoverySettings)
 
     # GTFS settings
-    default_feed_url: Optional[HttpUrl] = None
+    default_feed_url: HttpUrl | None = None
     update_interval: int = 86400  # 24 hours
     max_feed_size_mb: int = 200  # Maximum feed size in MB
 
@@ -127,8 +135,8 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 24 * 7  # 7 days
 
     # External services
-    mapbox_access_token: Optional[str] = None
-    google_maps_api_key: Optional[str] = None
+    mapbox_access_token: str | None = None
+    google_maps_api_key: str | None = None
 
     @field_validator("data_dir", "cache_dir", mode="before")
     @classmethod

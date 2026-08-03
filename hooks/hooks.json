@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "text",
+            "text": "## Session Context (GTFS MCP)\n\nYou have access to GTFS transit schedule data tools: feed management (add_feed, list_feeds), stop search (find_stops), departures (get_departures), and stop details (get_stop_info).\n\n**Before starting work:**\n1. List registered feeds: list_feeds()\n2. Resolve stops by name: find_stops(feed_id=\"<id>\", query=\"<station name>\", limit=5)\n\n**At end of work:**\n- Note the feed_id and stop_ids you used for follow-up queries"
+          }
+        ]
+      }
+    ]
+  }
+}

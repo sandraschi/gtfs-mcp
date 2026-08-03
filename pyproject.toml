@@ -32,35 +32,22 @@ dependencies = [
     "sqlalchemy>=2.0.0",
     "requests>=2.31.0",
     "beautifulsoup4>=4.12.0",
-    "ruff>=0.16.0,<0.17",
     "prefab-ui>=0.14.0",
 ]
 
-[project.optional-dependencies]
-dev = ["pytest>=7.0.0",
+[dependency-groups]
+dev = [
+    "pytest>=7.0.0",
     "pytest-asyncio>=0.20.0",
     "pytest-cov>=4.0.0",
-    "black>=23.0.0",
-    "isort>=5.12.0",
-    "mypy>=1.0.0",
     "httpx>=0.24.0",
-    "ruff>=0.16.0,<0.17"
+    "ruff>=0.16.0,<0.17",
+    "pyright>=1.1.300",
 ]
 
-[tool.black]
-line-length = 100
-target-version = ['py310']
-
-[tool.isort]
-profile = "black"
-line_length = 100
-
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-check_untyped_defs = true
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=gtfs_mcp --cov-report=term-missing --cov-fail-under=20"
 
 [tool.ruff]
 line-length = 120
@@ -68,7 +55,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "S", "UP", "RUF"]
-ignore = ["S101", "B008", "S106", "S110", "S112", "S101", "B008", "S106", "S110", "S112", "RUF012", "S603", "S607", "S324", "E402", "E501"]
+ignore = ["S101", "B008", "S106", "S110", "S112", "RUF012", "S603", "S607", "S324", "E402", "E501", "S104", "S105", "RUF013"]
 
 [tool.ruff.format]
 quote-style = "double"

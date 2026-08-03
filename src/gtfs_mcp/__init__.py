@@ -36,7 +36,6 @@ DATA_DIR = Path("data")
 @lifespan
 async def _gtfs_mcp_lifespan(server):
     """Start and stop GTFS backing services (FastMCP 3 lifespan)."""
-    from .services import gtfs_service
     from .services.gtfs_service import cleanup_gtfs_service, initialize_gtfs_service
 
     gtfs_service.mcp = server
@@ -70,4 +69,4 @@ if _bridge_urls:
 
 # Import service module so @mcp.tool() registrations run (after `mcp` exists).
 # REST HTTP routes are mounted on the FastAPI app in gtfs_mcp.main (FastMCP 3 has no include_router).
-from .services import gtfs_service  # noqa: E402, F401
+from .services import gtfs_service

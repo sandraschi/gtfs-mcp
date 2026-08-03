@@ -1,207 +1,87 @@
 """Tests for GTFS MCP API endpoints."""
-import pytest
+
 from fastapi import status
+
 
 def test_health_check(test_client):
     """Test the health check endpoint."""
     response = test_client.get("/health")
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == {"status": "ok"}
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["server"] == "GTFS MCP"
 
 
-def test_list_agencies(test_client, test_db):
-    """Test the list agencies endpoint."""
-    from gtfs_mcp.db.models import Agency
-    
-    # Add a test agency
-    agency = Agency(
-        agency_id="1",
-        agency_name="Test Agency",
-        agency_url="http://example.com",
-        agency_timezone="America/New_York",
-        agency_lang="en"
-    )
-    test_db.add(agency)
-    test_db.commit()
-    
-    # Test the endpoint
-    response = test_client.get("/api/v1/agencies")
+def test_api_v1_health(test_client):
+    """Test the versioned health endpoint (used by CUA-NSIS smoke)."""
+    response = test_client.get("/api/v1/health")
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["status"] == "ok"
+
+
+def test_capabilities(test_client):
+    """Test the capabilities endpoint shape."""
+    response = test_client.get("/api/capabilities")
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    assert len(data) == 1
-    assert data[0]["agency_id"] == "1"
-    assert data[0]["agency_name"] == "Test Agency"
+    assert data["server"] == "gtfs-mcp"
+    assert data["tools"] >= 5
+    assert data["features"]["feeds"] is True
 
 
-def test_list_routes(test_client, test_db):
-    """Test the list routes endpoint."""
-    from gtfs_mcp.db.models import Agency, Route
-    
-    # Add a test agency and route
-    agency = Agency(
-        agency_id="1",
-        agency_name="Test Agency",
-        agency_url="http://example.com",
-        agency_timezone="America/New_York"
-    )
-    test_db.add(agency)
-    test_db.flush()
-    
-    route = Route(
-        route_id="1",
-        agency_id="1",
-        route_short_name="1",
-        route_long_name="Test Route",
-        route_type=3
-    )
-    test_db.add(route)
-    test_db.commit()
-    
-    # Test the endpoint
-    response = test_client.get("/api/v1/routes")
+def test_skills(test_client):
+    """Test the skills listing for the Chat page."""
+    response = test_client.get("/api/skills")
+    assert response.status_code == status.HTTP_200_OK
+    skills = response.json()["skills"]
+    assert any(s["name"] == "gtfs-transit-expert" for s in skills)
+
+
+def test_diagnostics(test_client):
+    """Test the diagnostics endpoint (required by CUA-NSIS smoke)."""
+    response = test_client.get("/api/v1/diagnostics")
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    assert len(data) == 1
-    assert data[0]["route_id"] == "1"
-    assert data[0]["route_short_name"] == "1"
-    assert data[0]["route_long_name"] == "Test Route"
+    assert data["status"] == "ok"
+    assert data["tool_count"] >= 5
+    names = [t["name"] for t in data["tools"]]
+    assert "add_feed" in names
+    assert "find_stops" in names
 
 
-def test_list_stops(test_client, test_db):
-    """Test the list stops endpoint."""
-    from gtfs_mcp.db.models import Stop
-    
-    # Add a test stop
-    stop = Stop(
-        stop_id="1",
-        stop_name="Test Stop",
-        stop_lat=40.7128,
-        stop_lon=-74.0060
-    )
-    test_db.add(stop)
-    test_db.commit()
-    
-    # Test the endpoint
-    response = test_client.get("/api/v1/stops")
+def test_logs_ring_buffer(test_client):
+    """Test the log ring buffer endpoints."""
+    response = test_client.get("/api/logs?limit=5")
     assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    assert len(data) == 1
-    assert data[0]["stop_id"] == "1"
-    assert data[0]["stop_name"] == "Test Stop"
-    assert data[0]["stop_lat"] == 40.7128
-    assert data[0]["stop_lon"] == -74.0060
+    assert "entries" in response.json()
+
+    stats = test_client.get("/api/logs/stats")
+    assert stats.status_code == status.HTTP_200_OK
+    assert "levels" in stats.json()
 
 
-def test_get_route_stops(test_client, test_db):
-    """Test the get route stops endpoint."""
-    from gtfs_mcp.db.models import (
-        Agency, Route, Trip, Stop, Calendar, StopTime
-    )
-    
-    # Create test data
-    agency = Agency(
-        agency_id="1",
-        agency_name="Test Agency",
-        agency_url="http://example.com",
-        agency_timezone="America/New_York"
-    )
-    test_db.add(agency)
-    test_db.flush()
-    
-    route = Route(
-        route_id="1",
-        agency_id="1",
-        route_short_name="1",
-        route_long_name="Test Route",
-        route_type=3
-    )
-    test_db.add(route)
-    test_db.flush()
-    
-    calendar = Calendar(
-        service_id="1",
-        monday=1,
-        tuesday=1,
-        wednesday=1,
-        thursday=1,
-        friday=1,
-        saturday=0,
-        sunday=0,
-        start_date=20250101,
-        end_date=20251231
-    )
-    test_db.add(calendar)
-    test_db.flush()
-    
-    trip = Trip(
-        route_id=route.id,
-        service_id=calendar.id,
-        trip_id="1",
-        trip_headsign="Test Headsign",
-        direction_id=0
-    )
-    test_db.add(trip)
-    test_db.flush()
-    
-    stop1 = Stop(
-        stop_id="1",
-        stop_name="Stop 1",
-        stop_lat=40.7128,
-        stop_lon=-74.0060
-    )
-    stop2 = Stop(
-        stop_id="2",
-        stop_name="Stop 2",
-        stop_lat=40.7138,
-        stop_lon=-74.0070
-    )
-    test_db.add_all([stop1, stop2])
-    test_db.flush()
-    
-    stop_time1 = StopTime(
-        trip_id=trip.id,
-        arrival_time="08:00:00",
-        departure_time="08:01:00",
-        stop_id=stop1.id,
-        stop_sequence=1
-    )
-    stop_time2 = StopTime(
-        trip_id=trip.id,
-        arrival_time="08:10:00",
-        departure_time="08:11:00",
-        stop_id=stop2.id,
-        stop_sequence=2
-    )
-    test_db.add_all([stop_time1, stop_time2])
-    test_db.commit()
-    
-    # Test the endpoint
-    response = test_client.get(f"/api/v1/routes/1/stops")
+def test_list_feeds_empty(test_client):
+    """GET /v1/feeds returns a list (empty when no feed manager initialized)."""
+    response = test_client.get("/v1/feeds")
     assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    assert len(data) == 2
-    assert data[0]["stop_id"] == "1"
-    assert data[0]["stop_name"] == "Stop 1"
-    assert data[1]["stop_id"] == "2"
-    assert data[1]["stop_name"] == "Stop 2"
+    assert isinstance(response.json(), list)
 
 
-def test_import_gtfs_feed(test_client, temp_gtfs_feed):
-    """Test the import GTFS feed endpoint."""
-    # Test the endpoint with a valid GTFS feed
+def test_add_feed_without_manager_rejected(test_client):
+    """POST /v1/feeds without an initialized feed manager returns 400, not 500."""
     response = test_client.post(
-        "/api/v1/import",
-        json={"feed_path": temp_gtfs_feed}
+        "/v1/feeds",
+        json={"id": "wien", "url": "https://www.wienerlinien.at/ogd_realtime/doku/ogd/gtfs/gtfs.zip"},
     )
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    assert data["status"] == "success"
-    assert data["message"] == "GTFS feed imported successfully"
-    
-    # Verify the data was imported by checking the agencies endpoint
-    response = test_client.get("/api/v1/agencies")
-    assert response.status_code == status.HTTP_200_OK
-    agencies = response.json()
-    assert len(agencies) == 1
-    assert agencies[0]["agency_id"] == "1"
-    assert agencies[0]["agency_name"] == "Test Agency"
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+def test_mcp_tools_registered():
+    """The MCP tool surface registers the expected tool names."""
+    import asyncio
+
+    from gtfs_mcp import mcp
+
+    tools = [t.name for t in asyncio.run(mcp._list_tools())]
+    for expected in ("add_feed", "list_feeds", "get_departures", "get_stop_info", "find_stops", "status", "shutdown"):
+        assert expected in tools, f"missing tool: {expected}"

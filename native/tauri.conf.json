@@ -4,7 +4,9 @@
     "version": "0.1.0",
     "identifier": "com.sandraschi.gtfs-mcp",
     "build": {
-        "frontendDist": "../webapp/dist"
+        "frontendDist": "../web_sota/dist",
+        "beforeDevCommand": "npm --prefix ../web_sota run dev",
+        "beforeBuildCommand": "npm --prefix ../web_sota run build"
     },
     "app": {
         "windows": [
@@ -19,7 +21,7 @@
             }
         ],
         "security": {
-            "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:10700 ipc: http://ipc.localhost; img-src 'self' data: http://127.0.0.1:10700; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+            "csp": null
         }
     },
     "bundle": {
@@ -28,7 +30,7 @@
         "icon": ["icons/icon.png", "icons/icon.ico"],
         "resources": [
             "resources/gtfs-mcp-backend.exe",
-            "resources/.env"],
+            "resources/.env.example"],
         "windows": {
             "webviewInstallMode": {
                 "type": "skip"

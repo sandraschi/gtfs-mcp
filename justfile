@@ -1,4 +1,4 @@
-set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 import 'scripts/just/fleet.just'
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
@@ -31,15 +31,48 @@ audit-deps:
 
 # ── GTFS Specific ─────────────────────────────────────────────────────────────
 
-# Sync GTFS data (stubs for implementation)
-sync-data:
-    @Write-Host "Syncing GTFS data sources..." -ForegroundColor Cyan
+# Serve the MCP server (stdio for Claude Desktop)
+serve:
+    uv run gtfs-mcp
+
+# Run the GTFS MCP server in HTTP mode on 10913
+dev:
+    uv run -m gtfs_mcp --http --host 127.0.0.1 --port 10913
 
 # Run the GTFS MCP server
 run:
     uv run gtfs-mcp
 
+# ── Test ──────────────────────────────────────────────────────────────────────
+
+# Run the test suite
+test:
+    uv run pytest tests/ -q
+
+# Typecheck (five-gate: ruff / pyright / pytest / tsc / biome)
+certify: gates-green
+
+# Lint + typecheck + tests
+gates-green: lint types test
+
+# Typecheck only (pyright + tsc)
+types:
+    uv run pyright src
+    @cd web_sota && npx tsc --noEmit
+
+# ── Webapp ────────────────────────────────────────────────────────────────────
+
+# Biome check on the webapp
+e2e:
+    @cd web_sota && npx biome check src/
+
 # Clean build artifacts
 clean:
     @Get-ChildItem -Recurse -Filter "__pycache__" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
     @Write-Host "Cleaned."
+
+# Bootstrap: install dev deps + pre-commit hook
+bootstrap:
+    uv sync --group dev
+    uv run pre-commit install
+    Write-Host "Pre-commit hooks installed." -ForegroundColor Green

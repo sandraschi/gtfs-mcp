@@ -3,10 +3,10 @@ Database models for GTFS MCP server.
 """
 
 from datetime import datetime
-from typing import List, Optional, Dict, Any
-import json
+from typing import Any, Optional
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     DateTime,
@@ -17,26 +17,15 @@ from sqlalchemy import (
     Text,
     event,
     func,
-    select,
     update,
-    delete,
-    and_,
-    or_,
-    JSON,
 )
 from sqlalchemy.orm import (
-    declarative_base,
-    relationship,
-    sessionmaker,
     Mapped,
+    declarative_base,
     mapped_column,
+    relationship,
     validates,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.expression import text
-from sqlalchemy.dialects.postgresql import JSONB
-
-from ..config import settings
 
 # SQLAlchemy setup
 Base = declarative_base()
@@ -63,7 +52,7 @@ feed_category = Table(
 
 class TimestampMixin:
     """Mixin that adds timestamp fields to models."""
-    
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -86,65 +75,65 @@ class Feed(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     url: Mapped[str] = mapped_column(String(512), nullable=False, unique=True, index=True)
     default_city: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    country: Mapped[Optional[str]] = mapped_column(String(100), index=True)
+    country: Mapped[str | None] = mapped_column(String(100), index=True)
     timezone: Mapped[str] = mapped_column(String(100), default="UTC")
     language: Mapped[str] = mapped_column(String(10), default="en")
-    
+
     # Feed metadata
-    description: Mapped[Optional[str]] = mapped_column(Text)
-    feed_contact_email: Mapped[Optional[str]] = mapped_column(String(255))
-    feed_publisher_name: Mapped[Optional[str]] = mapped_column(String(255))
-    feed_publisher_url: Mapped[Optional[str]] = mapped_column(String(512))
-    feed_lang: Mapped[Optional[str]] = mapped_column(String(10))
-    feed_start_date: Mapped[Optional[datetime]]
-    feed_end_date: Mapped[Optional[datetime]]
-    feed_version: Mapped[Optional[str]] = mapped_column(String(100))
-    
+    description: Mapped[str | None] = mapped_column(Text)
+    feed_contact_email: Mapped[str | None] = mapped_column(String(255))
+    feed_publisher_name: Mapped[str | None] = mapped_column(String(255))
+    feed_publisher_url: Mapped[str | None] = mapped_column(String(512))
+    feed_lang: Mapped[str | None] = mapped_column(String(10))
+    feed_start_date: Mapped[datetime | None]
+    feed_end_date: Mapped[datetime | None]
+    feed_version: Mapped[str | None] = mapped_column(String(100))
+
     # Status and update info
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     update_interval: Mapped[int] = mapped_column(Integer, default=86400)  # 24 hours
-    last_successful_update: Mapped[Optional[datetime]]
-    last_update_attempt: Mapped[Optional[datetime]]
+    last_successful_update: Mapped[datetime | None]
+    last_update_attempt: Mapped[datetime | None]
     update_status: Mapped[str] = mapped_column(String(50), default="pending")  # pending, success, failed
-    error_message: Mapped[Optional[str]] = mapped_column(Text)
-    
+    error_message: Mapped[str | None] = mapped_column(Text)
+
     # Licensing and attribution
-    license_url: Mapped[Optional[str]] = mapped_column(String(512))
-    attribution: Mapped[Optional[str]] = mapped_column(Text)
-    
+    license_url: Mapped[str | None] = mapped_column(String(512))
+    attribution: Mapped[str | None] = mapped_column(Text)
+
     # Quality metrics
     data_quality: Mapped[str] = mapped_column(String(50), default="unknown")  # unknown, good, partial, poor
-    validation_report: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
-    
+    validation_report: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
     # Additional metadata
-    tags: Mapped[Optional[List[str]]] = mapped_column(JSONB, nullable=True)
-    metadata_: Mapped[Optional[Dict[str, Any]]] = mapped_column("metadata", JSONB, nullable=True)
-    notes: Mapped[Optional[str]] = mapped_column(Text)
+    tags: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    metadata_: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSON, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text)
 
     # Relationships
-    cities: Mapped[List["City"]] = relationship(
+    cities: Mapped[list["City"]] = relationship(
         "City",
         secondary=feed_city,
         back_populates="feeds",
         lazy="selectin",
     )
-    
-    versions: Mapped[List["FeedVersion"]] = relationship(
+
+    versions: Mapped[list["FeedVersion"]] = relationship(
         "FeedVersion",
         back_populates="feed",
         cascade="all, delete-orphan",
         lazy="selectin",
         order_by="desc(FeedVersion.start_date)",
     )
-    
-    categories: Mapped[List["Category"]] = relationship(
+
+    categories: Mapped[list["Category"]] = relationship(
         "Category",
         secondary=feed_category,
         back_populates="feeds",
         lazy="selectin",
     )
-    
-    discovery_logs: Mapped[List["FeedDiscoveryLog"]] = relationship(
+
+    discovery_logs: Mapped[list["FeedDiscoveryLog"]] = relationship(
         "FeedDiscoveryLog",
         back_populates="feed",
         lazy="selectin",
@@ -153,15 +142,15 @@ class Feed(Base, TimestampMixin):
 
     def __repr__(self) -> str:
         return f"<Feed(id={self.id}, name='{self.name}')>"
-    
-    @validates('url')
+
+    @validates("url")
     def validate_url(self, key: str, url: str) -> str:
         """Validate the feed URL."""
-        if not url.startswith(('http://', 'https://')):
+        if not url.startswith(("http://", "https://")):
             raise ValueError("URL must start with http:// or https://")
         return url
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert model to dictionary."""
         return {
             "id": self.id,
@@ -182,46 +171,43 @@ class City(Base, TimestampMixin):
     """City information for GTFS feeds."""
 
     __tablename__ = "cities"
-    __table_args__ = (
-        {'schema': 'public'},
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     country: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    region: Mapped[Optional[str]] = mapped_column(String(100), index=True)
-    timezone: Mapped[Optional[str]] = mapped_column(String(100), default="UTC")
-    
+    region: Mapped[str | None] = mapped_column(String(100), index=True)
+    timezone: Mapped[str | None] = mapped_column(String(100), default="UTC")
+
     # Location data
-    latitude: Mapped[Optional[float]]
-    longitude: Mapped[Optional[float]]
-    elevation: Mapped[Optional[float]]
-    
+    latitude: Mapped[float | None]
+    longitude: Mapped[float | None]
+    elevation: Mapped[float | None]
+
     # Demographics
-    population: Mapped[Optional[int]]
-    area_km2: Mapped[Optional[float]]
-    
+    population: Mapped[int | None]
+    area_km2: Mapped[float | None]
+
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
-    
+
     # Additional metadata
-    timezone_offset: Mapped[Optional[int]]  # Offset from UTC in minutes
-    languages: Mapped[Optional[List[str]]] = mapped_column(JSONB, nullable=True)
-    metadata_: Mapped[Optional[Dict[str, Any]]] = mapped_column("metadata", JSONB, nullable=True)
-    notes: Mapped[Optional[str]] = mapped_column(Text)
+    timezone_offset: Mapped[int | None]  # Offset from UTC in minutes
+    languages: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    metadata_: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSON, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text)
 
     # Relationships
-    feeds: Mapped[List["Feed"]] = relationship(
+    feeds: Mapped[list["Feed"]] = relationship(
         "Feed",
         secondary=feed_city,
         back_populates="cities",
         lazy="selectin",
     )
-    
+
     def __repr__(self) -> str:
         return f"<City(id={self.id}, name='{self.name}', country='{self.country}')>"
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert model to dictionary."""
         return {
             "id": self.id,
@@ -238,27 +224,27 @@ class City(Base, TimestampMixin):
 
 class Category(Base, TimestampMixin):
     """Categories for organizing GTFS feeds."""
-    
+
     __tablename__ = "categories"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
-    description: Mapped[Optional[str]] = mapped_column(Text)
-    icon: Mapped[Optional[str]] = mapped_column(String(100))
+    description: Mapped[str | None] = mapped_column(Text)
+    icon: Mapped[str | None] = mapped_column(String(100))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
-    
+
     # Relationships
-    feeds: Mapped[List["Feed"]] = relationship(
+    feeds: Mapped[list["Feed"]] = relationship(
         "Feed",
         secondary=feed_category,
         back_populates="categories",
         lazy="selectin",
     )
-    
+
     def __repr__(self) -> str:
         return f"<Category(id={self.id}, name='{self.name}')>"
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert model to dictionary."""
         return {
             "id": self.id,
@@ -266,7 +252,7 @@ class Category(Base, TimestampMixin):
             "description": self.description,
             "icon": self.icon,
             "is_active": self.is_active,
-            "feed_count": len(self.feeds) if hasattr(self, 'feeds') else 0,
+            "feed_count": len(self.feeds) if hasattr(self, "feeds") else 0,
         }
 
 
@@ -276,37 +262,39 @@ class FeedVersion(Base, TimestampMixin):
     __tablename__ = "feed_versions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    feed_id: Mapped[int] = mapped_column(Integer, ForeignKey("feeds.id", ondelete="CASCADE"), nullable=False, index=True)
+    feed_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("feeds.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     version: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    
+
     # Version metadata
-    start_date: Mapped[Optional[datetime]]
-    end_date: Mapped[Optional[datetime]]
+    start_date: Mapped[datetime | None]
+    end_date: Mapped[datetime | None]
     download_url: Mapped[str] = mapped_column(String(512), nullable=False)
-    download_headers: Mapped[Optional[Dict[str, str]]] = mapped_column(JSONB, nullable=True)
-    
+    download_headers: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
+
     # File information
-    file_name: Mapped[Optional[str]] = mapped_column(String(255))
-    file_size: Mapped[Optional[int]]  # in bytes
-    file_hash: Mapped[Optional[str]] = mapped_column(String(64))  # SHA-256 hash
-    file_type: Mapped[Optional[str]] = mapped_column(String(50))  # zip, csv, etc.
-    
+    file_name: Mapped[str | None] = mapped_column(String(255))
+    file_size: Mapped[int | None]  # in bytes
+    file_hash: Mapped[str | None] = mapped_column(String(64))  # SHA-256 hash
+    file_type: Mapped[str | None] = mapped_column(String(50))  # zip, csv, etc.
+
     # Status
     is_current: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
-    is_valid: Mapped[Optional[bool]] = mapped_column(Boolean, index=True)
-    validation_errors: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
-    
+    is_valid: Mapped[bool | None] = mapped_column(Boolean, index=True)
+    validation_errors: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
     # Additional metadata
-    metadata_: Mapped[Optional[Dict[str, Any]]] = mapped_column("metadata", JSONB, nullable=True)
-    notes: Mapped[Optional[str]] = mapped_column(Text)
+    metadata_: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSON, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text)
 
     # Relationships
     feed: Mapped["Feed"] = relationship("Feed", back_populates="versions", lazy="joined")
-    
+
     def __repr__(self) -> str:
         return f"<FeedVersion(id={self.id}, feed_id={self.feed_id}, version='{self.version}')>"
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert model to dictionary."""
         return {
             "id": self.id,
@@ -328,42 +316,44 @@ class FeedDiscoveryLog(Base, TimestampMixin):
     __tablename__ = "feed_discovery_logs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    feed_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("feeds.id", ondelete="CASCADE"), index=True)
-    
+    feed_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("feeds.id", ondelete="CASCADE"), index=True)
+
     # Discovery metadata
-    source: Mapped[str] = mapped_column(String(100), nullable=False, index=True)  # e.g., 'transitfeeds', 'mobilitydata', 'manual'
+    source: Mapped[str] = mapped_column(
+        String(100), nullable=False, index=True
+    )  # e.g., 'transitfeeds', 'mobilitydata', 'manual'
     url: Mapped[str] = mapped_column(String(512), nullable=False)
-    method: Mapped[Optional[str]] = mapped_column(String(10))  # GET, POST, etc.
+    method: Mapped[str | None] = mapped_column(String(10))  # GET, POST, etc.
     status: Mapped[str] = mapped_column(String(50), nullable=False, index=True)  # pending, success, failed, skipped
-    status_code: Mapped[Optional[int]]
-    
+    status_code: Mapped[int | None]
+
     # Results
     feeds_found: Mapped[int] = mapped_column(Integer, default=0)
     feeds_processed: Mapped[int] = mapped_column(Integer, default=0)
     feeds_added: Mapped[int] = mapped_column(Integer, default=0)
     feeds_updated: Mapped[int] = mapped_column(Integer, default=0)
-    
+
     # Timing
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    completed_at: Mapped[Optional[datetime]]
-    duration_seconds: Mapped[Optional[float]]
-    
+    completed_at: Mapped[datetime | None]
+    duration_seconds: Mapped[float | None]
+
     # Error handling
-    error_message: Mapped[Optional[str]] = mapped_column(Text)
-    error_traceback: Mapped[Optional[str]] = mapped_column(Text)
-    
+    error_message: Mapped[str | None] = mapped_column(Text)
+    error_traceback: Mapped[str | None] = mapped_column(Text)
+
     # Additional metadata
-    request_headers: Mapped[Optional[Dict[str, str]]] = mapped_column(JSONB, nullable=True)
-    response_headers: Mapped[Optional[Dict[str, str]]] = mapped_column(JSONB, nullable=True)
-    metadata_: Mapped[Optional[Dict[str, Any]]] = mapped_column("metadata", JSONB, nullable=True)
-    
+    request_headers: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
+    response_headers: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
+    metadata_: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSON, nullable=True)
+
     # Relationships
     feed: Mapped[Optional["Feed"]] = relationship("Feed", back_populates="discovery_logs", lazy="joined")
-    
+
     def __repr__(self) -> str:
         return f"<FeedDiscoveryLog(id={self.id}, source='{self.source}', status='{self.status}')>"
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert model to dictionary."""
         return {
             "id": self.id,
@@ -383,7 +373,7 @@ class FeedDiscoveryLog(Base, TimestampMixin):
 
 
 # Event listeners
-@event.listens_for(FeedVersion, 'before_insert')
+@event.listens_for(FeedVersion, "before_insert")
 def set_current_false_for_other_versions(mapper, connection, target):
     """Ensure only one version is marked as current for a feed."""
     if target.is_current:
@@ -396,7 +386,7 @@ def set_current_false_for_other_versions(mapper, connection, target):
         connection.execute(stmt)
 
 
-@event.listens_for(FeedVersion, 'before_update')
+@event.listens_for(FeedVersion, "before_update")
 def prevent_multiple_current_versions(mapper, connection, target):
     """Ensure only one version is marked as current for a feed."""
     if target.is_current:
@@ -409,7 +399,7 @@ def prevent_multiple_current_versions(mapper, connection, target):
         connection.execute(stmt)
 
 
-@event.listens_for(FeedDiscoveryLog, 'before_update')
+@event.listens_for(FeedDiscoveryLog, "before_update")
 def update_duration(mapper, connection, target):
     """Update duration when discovery is completed."""
     if target.completed_at and target.started_at and not target.duration_seconds:

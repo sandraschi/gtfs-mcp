@@ -1,3 +1,877 @@
 [
-  { "tool": "", "params": {}, "description": "REQUIRED: 100+ structured tool call mappings showing every operation and parameter combination." }
+  {
+    "id": 1,
+    "title": "List feeds (wien)",
+    "input": "What feeds are available for wien?",
+    "output": "list_feeds()",
+    "explanation": "Feed registry with intervals."
+  },
+  {
+    "id": 2,
+    "title": "Status check",
+    "input": "Are you running?",
+    "output": "status()",
+    "explanation": "Health + feed count."
+  },
+  {
+    "id": 3,
+    "title": "Add feed wien",
+    "input": "Add the wien feed from its GTFS zip URL.",
+    "output": "add_feed(feed_id=\"wien\", url=\"https://example.com/wien/gtfs.zip\", update_interval=3600)",
+    "explanation": "Register and download a feed."
+  },
+  {
+    "id": 4,
+    "title": "Refresh wien",
+    "input": "Refresh feed wien now.",
+    "output": "add_feed(feed_id=\"wien\", url=\"https://example.com/wien/gtfs.zip\", force_update=True)",
+    "explanation": "Force re-download."
+  },
+  {
+    "id": 5,
+    "title": "Daily refresh wien",
+    "input": "Set up wien with daily refresh.",
+    "output": "add_feed(feed_id=\"wien\", url=\"https://example.com/wien/gtfs.zip\", update_interval=86400)",
+    "explanation": "24h refresh interval."
+  },
+  {
+    "id": 6,
+    "title": "List feeds (mta-nyc)",
+    "input": "What feeds are available for mta-nyc?",
+    "output": "list_feeds()",
+    "explanation": "Feed registry with intervals."
+  },
+  {
+    "id": 7,
+    "title": "Status check",
+    "input": "Are you running?",
+    "output": "status()",
+    "explanation": "Health + feed count."
+  },
+  {
+    "id": 8,
+    "title": "Add feed mta-nyc",
+    "input": "Add the mta-nyc feed from its GTFS zip URL.",
+    "output": "add_feed(feed_id=\"mta-nyc\", url=\"https://example.com/mta-nyc/gtfs.zip\", update_interval=3600)",
+    "explanation": "Register and download a feed."
+  },
+  {
+    "id": 9,
+    "title": "Refresh mta-nyc",
+    "input": "Refresh feed mta-nyc now.",
+    "output": "add_feed(feed_id=\"mta-nyc\", url=\"https://example.com/mta-nyc/gtfs.zip\", force_update=True)",
+    "explanation": "Force re-download."
+  },
+  {
+    "id": 10,
+    "title": "Daily refresh mta-nyc",
+    "input": "Set up mta-nyc with daily refresh.",
+    "output": "add_feed(feed_id=\"mta-nyc\", url=\"https://example.com/mta-nyc/gtfs.zip\", update_interval=86400)",
+    "explanation": "24h refresh interval."
+  },
+  {
+    "id": 11,
+    "title": "List feeds (vbb)",
+    "input": "What feeds are available for vbb?",
+    "output": "list_feeds()",
+    "explanation": "Feed registry with intervals."
+  },
+  {
+    "id": 12,
+    "title": "Status check",
+    "input": "Are you running?",
+    "output": "status()",
+    "explanation": "Health + feed count."
+  },
+  {
+    "id": 13,
+    "title": "Add feed vbb",
+    "input": "Add the vbb feed from its GTFS zip URL.",
+    "output": "add_feed(feed_id=\"vbb\", url=\"https://example.com/vbb/gtfs.zip\", update_interval=3600)",
+    "explanation": "Register and download a feed."
+  },
+  {
+    "id": 14,
+    "title": "Refresh vbb",
+    "input": "Refresh feed vbb now.",
+    "output": "add_feed(feed_id=\"vbb\", url=\"https://example.com/vbb/gtfs.zip\", force_update=True)",
+    "explanation": "Force re-download."
+  },
+  {
+    "id": 15,
+    "title": "Daily refresh vbb",
+    "input": "Set up vbb with daily refresh.",
+    "output": "add_feed(feed_id=\"vbb\", url=\"https://example.com/vbb/gtfs.zip\", update_interval=86400)",
+    "explanation": "24h refresh interval."
+  },
+  {
+    "id": 16,
+    "title": "List feeds (sbahn)",
+    "input": "What feeds are available for sbahn?",
+    "output": "list_feeds()",
+    "explanation": "Feed registry with intervals."
+  },
+  {
+    "id": 17,
+    "title": "Status check",
+    "input": "Are you running?",
+    "output": "status()",
+    "explanation": "Health + feed count."
+  },
+  {
+    "id": 18,
+    "title": "Add feed sbahn",
+    "input": "Add the sbahn feed from its GTFS zip URL.",
+    "output": "add_feed(feed_id=\"sbahn\", url=\"https://example.com/sbahn/gtfs.zip\", update_interval=3600)",
+    "explanation": "Register and download a feed."
+  },
+  {
+    "id": 19,
+    "title": "Refresh sbahn",
+    "input": "Refresh feed sbahn now.",
+    "output": "add_feed(feed_id=\"sbahn\", url=\"https://example.com/sbahn/gtfs.zip\", force_update=True)",
+    "explanation": "Force re-download."
+  },
+  {
+    "id": 20,
+    "title": "Daily refresh sbahn",
+    "input": "Set up sbahn with daily refresh.",
+    "output": "add_feed(feed_id=\"sbahn\", url=\"https://example.com/sbahn/gtfs.zip\", update_interval=86400)",
+    "explanation": "24h refresh interval."
+  },
+  {
+    "id": 21,
+    "title": "List feeds (regional)",
+    "input": "What feeds are available for regional?",
+    "output": "list_feeds()",
+    "explanation": "Feed registry with intervals."
+  },
+  {
+    "id": 22,
+    "title": "Status check",
+    "input": "Are you running?",
+    "output": "status()",
+    "explanation": "Health + feed count."
+  },
+  {
+    "id": 23,
+    "title": "Add feed regional",
+    "input": "Add the regional feed from its GTFS zip URL.",
+    "output": "add_feed(feed_id=\"regional\", url=\"https://example.com/regional/gtfs.zip\", update_interval=3600)",
+    "explanation": "Register and download a feed."
+  },
+  {
+    "id": 24,
+    "title": "Refresh regional",
+    "input": "Refresh feed regional now.",
+    "output": "add_feed(feed_id=\"regional\", url=\"https://example.com/regional/gtfs.zip\", force_update=True)",
+    "explanation": "Force re-download."
+  },
+  {
+    "id": 25,
+    "title": "Daily refresh regional",
+    "input": "Set up regional with daily refresh.",
+    "output": "add_feed(feed_id=\"regional\", url=\"https://example.com/regional/gtfs.zip\", update_interval=86400)",
+    "explanation": "24h refresh interval."
+  },
+  {
+    "id": 26,
+    "title": "Find stop Praterstern in wien",
+    "input": "Find the stop Praterstern in feed wien.",
+    "output": "find_stops(feed_id=\"wien\", query=\"Praterstern\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 27,
+    "title": "Find stop Karlsplatz in wien",
+    "input": "Find the stop Karlsplatz in feed wien.",
+    "output": "find_stops(feed_id=\"wien\", query=\"Karlsplatz\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 28,
+    "title": "Find stop Hauptbahnhof in wien",
+    "input": "Find the stop Hauptbahnhof in feed wien.",
+    "output": "find_stops(feed_id=\"wien\", query=\"Hauptbahnhof\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 29,
+    "title": "Find stop Westbahnhof in wien",
+    "input": "Find the stop Westbahnhof in feed wien.",
+    "output": "find_stops(feed_id=\"wien\", query=\"Westbahnhof\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 30,
+    "title": "Find stop Stephansplatz in wien",
+    "input": "Find the stop Stephansplatz in feed wien.",
+    "output": "find_stops(feed_id=\"wien\", query=\"Stephansplatz\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 31,
+    "title": "Find stop Praterstern in mta-nyc",
+    "input": "Find the stop Praterstern in feed mta-nyc.",
+    "output": "find_stops(feed_id=\"mta-nyc\", query=\"Praterstern\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 32,
+    "title": "Find stop Karlsplatz in mta-nyc",
+    "input": "Find the stop Karlsplatz in feed mta-nyc.",
+    "output": "find_stops(feed_id=\"mta-nyc\", query=\"Karlsplatz\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 33,
+    "title": "Find stop Hauptbahnhof in mta-nyc",
+    "input": "Find the stop Hauptbahnhof in feed mta-nyc.",
+    "output": "find_stops(feed_id=\"mta-nyc\", query=\"Hauptbahnhof\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 34,
+    "title": "Find stop Westbahnhof in mta-nyc",
+    "input": "Find the stop Westbahnhof in feed mta-nyc.",
+    "output": "find_stops(feed_id=\"mta-nyc\", query=\"Westbahnhof\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 35,
+    "title": "Find stop Stephansplatz in mta-nyc",
+    "input": "Find the stop Stephansplatz in feed mta-nyc.",
+    "output": "find_stops(feed_id=\"mta-nyc\", query=\"Stephansplatz\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 36,
+    "title": "Find stop Praterstern in vbb",
+    "input": "Find the stop Praterstern in feed vbb.",
+    "output": "find_stops(feed_id=\"vbb\", query=\"Praterstern\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 37,
+    "title": "Find stop Karlsplatz in vbb",
+    "input": "Find the stop Karlsplatz in feed vbb.",
+    "output": "find_stops(feed_id=\"vbb\", query=\"Karlsplatz\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 38,
+    "title": "Find stop Hauptbahnhof in vbb",
+    "input": "Find the stop Hauptbahnhof in feed vbb.",
+    "output": "find_stops(feed_id=\"vbb\", query=\"Hauptbahnhof\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 39,
+    "title": "Find stop Westbahnhof in vbb",
+    "input": "Find the stop Westbahnhof in feed vbb.",
+    "output": "find_stops(feed_id=\"vbb\", query=\"Westbahnhof\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 40,
+    "title": "Find stop Stephansplatz in vbb",
+    "input": "Find the stop Stephansplatz in feed vbb.",
+    "output": "find_stops(feed_id=\"vbb\", query=\"Stephansplatz\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 41,
+    "title": "Find stop Praterstern in sbahn",
+    "input": "Find the stop Praterstern in feed sbahn.",
+    "output": "find_stops(feed_id=\"sbahn\", query=\"Praterstern\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 42,
+    "title": "Find stop Karlsplatz in sbahn",
+    "input": "Find the stop Karlsplatz in feed sbahn.",
+    "output": "find_stops(feed_id=\"sbahn\", query=\"Karlsplatz\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 43,
+    "title": "Find stop Hauptbahnhof in sbahn",
+    "input": "Find the stop Hauptbahnhof in feed sbahn.",
+    "output": "find_stops(feed_id=\"sbahn\", query=\"Hauptbahnhof\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 44,
+    "title": "Find stop Westbahnhof in sbahn",
+    "input": "Find the stop Westbahnhof in feed sbahn.",
+    "output": "find_stops(feed_id=\"sbahn\", query=\"Westbahnhof\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 45,
+    "title": "Find stop Stephansplatz in sbahn",
+    "input": "Find the stop Stephansplatz in feed sbahn.",
+    "output": "find_stops(feed_id=\"sbahn\", query=\"Stephansplatz\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 46,
+    "title": "Find stop Praterstern in regional",
+    "input": "Find the stop Praterstern in feed regional.",
+    "output": "find_stops(feed_id=\"regional\", query=\"Praterstern\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 47,
+    "title": "Find stop Karlsplatz in regional",
+    "input": "Find the stop Karlsplatz in feed regional.",
+    "output": "find_stops(feed_id=\"regional\", query=\"Karlsplatz\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 48,
+    "title": "Find stop Hauptbahnhof in regional",
+    "input": "Find the stop Hauptbahnhof in feed regional.",
+    "output": "find_stops(feed_id=\"regional\", query=\"Hauptbahnhof\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 49,
+    "title": "Find stop Westbahnhof in regional",
+    "input": "Find the stop Westbahnhof in feed regional.",
+    "output": "find_stops(feed_id=\"regional\", query=\"Westbahnhof\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 50,
+    "title": "Find stop Stephansplatz in regional",
+    "input": "Find the stop Stephansplatz in feed regional.",
+    "output": "find_stops(feed_id=\"regional\", query=\"Stephansplatz\", limit=5)",
+    "explanation": "Resolve station name to stop_id."
+  },
+  {
+    "id": 51,
+    "title": "Fragment search wien",
+    "input": "Find stops containing haupt in wien.",
+    "output": "find_stops(feed_id=\"wien\", query=\"haupt\", limit=10)",
+    "explanation": "Partial substring search."
+  },
+  {
+    "id": 52,
+    "title": "Code search wien",
+    "input": "Find the stop with code 3104 in wien.",
+    "output": "find_stops(feed_id=\"wien\", query=\"3104\", limit=5)",
+    "explanation": "Search by code."
+  },
+  {
+    "id": 53,
+    "title": "Fragment search mta-nyc",
+    "input": "Find stops containing haupt in mta-nyc.",
+    "output": "find_stops(feed_id=\"mta-nyc\", query=\"haupt\", limit=10)",
+    "explanation": "Partial substring search."
+  },
+  {
+    "id": 54,
+    "title": "Code search mta-nyc",
+    "input": "Find the stop with code 3104 in mta-nyc.",
+    "output": "find_stops(feed_id=\"mta-nyc\", query=\"3104\", limit=5)",
+    "explanation": "Search by code."
+  },
+  {
+    "id": 55,
+    "title": "Fragment search vbb",
+    "input": "Find stops containing haupt in vbb.",
+    "output": "find_stops(feed_id=\"vbb\", query=\"haupt\", limit=10)",
+    "explanation": "Partial substring search."
+  },
+  {
+    "id": 56,
+    "title": "Code search vbb",
+    "input": "Find the stop with code 3104 in vbb.",
+    "output": "find_stops(feed_id=\"vbb\", query=\"3104\", limit=5)",
+    "explanation": "Search by code."
+  },
+  {
+    "id": 57,
+    "title": "Fragment search sbahn",
+    "input": "Find stops containing haupt in sbahn.",
+    "output": "find_stops(feed_id=\"sbahn\", query=\"haupt\", limit=10)",
+    "explanation": "Partial substring search."
+  },
+  {
+    "id": 58,
+    "title": "Code search sbahn",
+    "input": "Find the stop with code 3104 in sbahn.",
+    "output": "find_stops(feed_id=\"sbahn\", query=\"3104\", limit=5)",
+    "explanation": "Search by code."
+  },
+  {
+    "id": 59,
+    "title": "Fragment search regional",
+    "input": "Find stops containing haupt in regional.",
+    "output": "find_stops(feed_id=\"regional\", query=\"haupt\", limit=10)",
+    "explanation": "Partial substring search."
+  },
+  {
+    "id": 60,
+    "title": "Code search regional",
+    "input": "Find the stop with code 3104 in regional.",
+    "output": "find_stops(feed_id=\"regional\", query=\"3104\", limit=5)",
+    "explanation": "Search by code."
+  },
+  {
+    "id": 61,
+    "title": "Departures wien/1234",
+    "input": "Next departures from stop 1234 in feed wien.",
+    "output": "get_departures(feed_id=\"wien\", stop_id=\"1234\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 62,
+    "title": "Route-filtered wien/1234",
+    "input": "Next U1 departures from stop 1234 in wien.",
+    "output": "get_departures(feed_id=\"wien\", stop_id=\"1234\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 63,
+    "title": "Stop info wien/1234",
+    "input": "Details for stop 1234 in feed wien.",
+    "output": "get_stop_info(feed_id=\"wien\", stop_id=\"1234\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 64,
+    "title": "Departures wien/5678",
+    "input": "Next departures from stop 5678 in feed wien.",
+    "output": "get_departures(feed_id=\"wien\", stop_id=\"5678\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 65,
+    "title": "Route-filtered wien/5678",
+    "input": "Next U1 departures from stop 5678 in wien.",
+    "output": "get_departures(feed_id=\"wien\", stop_id=\"5678\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 66,
+    "title": "Stop info wien/5678",
+    "input": "Details for stop 5678 in feed wien.",
+    "output": "get_stop_info(feed_id=\"wien\", stop_id=\"5678\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 67,
+    "title": "Departures wien/9012",
+    "input": "Next departures from stop 9012 in feed wien.",
+    "output": "get_departures(feed_id=\"wien\", stop_id=\"9012\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 68,
+    "title": "Route-filtered wien/9012",
+    "input": "Next U1 departures from stop 9012 in wien.",
+    "output": "get_departures(feed_id=\"wien\", stop_id=\"9012\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 69,
+    "title": "Stop info wien/9012",
+    "input": "Details for stop 9012 in feed wien.",
+    "output": "get_stop_info(feed_id=\"wien\", stop_id=\"9012\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 70,
+    "title": "Departures mta-nyc/1234",
+    "input": "Next departures from stop 1234 in feed mta-nyc.",
+    "output": "get_departures(feed_id=\"mta-nyc\", stop_id=\"1234\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 71,
+    "title": "Route-filtered mta-nyc/1234",
+    "input": "Next U1 departures from stop 1234 in mta-nyc.",
+    "output": "get_departures(feed_id=\"mta-nyc\", stop_id=\"1234\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 72,
+    "title": "Stop info mta-nyc/1234",
+    "input": "Details for stop 1234 in feed mta-nyc.",
+    "output": "get_stop_info(feed_id=\"mta-nyc\", stop_id=\"1234\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 73,
+    "title": "Departures mta-nyc/5678",
+    "input": "Next departures from stop 5678 in feed mta-nyc.",
+    "output": "get_departures(feed_id=\"mta-nyc\", stop_id=\"5678\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 74,
+    "title": "Route-filtered mta-nyc/5678",
+    "input": "Next U1 departures from stop 5678 in mta-nyc.",
+    "output": "get_departures(feed_id=\"mta-nyc\", stop_id=\"5678\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 75,
+    "title": "Stop info mta-nyc/5678",
+    "input": "Details for stop 5678 in feed mta-nyc.",
+    "output": "get_stop_info(feed_id=\"mta-nyc\", stop_id=\"5678\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 76,
+    "title": "Departures mta-nyc/9012",
+    "input": "Next departures from stop 9012 in feed mta-nyc.",
+    "output": "get_departures(feed_id=\"mta-nyc\", stop_id=\"9012\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 77,
+    "title": "Route-filtered mta-nyc/9012",
+    "input": "Next U1 departures from stop 9012 in mta-nyc.",
+    "output": "get_departures(feed_id=\"mta-nyc\", stop_id=\"9012\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 78,
+    "title": "Stop info mta-nyc/9012",
+    "input": "Details for stop 9012 in feed mta-nyc.",
+    "output": "get_stop_info(feed_id=\"mta-nyc\", stop_id=\"9012\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 79,
+    "title": "Departures vbb/1234",
+    "input": "Next departures from stop 1234 in feed vbb.",
+    "output": "get_departures(feed_id=\"vbb\", stop_id=\"1234\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 80,
+    "title": "Route-filtered vbb/1234",
+    "input": "Next U1 departures from stop 1234 in vbb.",
+    "output": "get_departures(feed_id=\"vbb\", stop_id=\"1234\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 81,
+    "title": "Stop info vbb/1234",
+    "input": "Details for stop 1234 in feed vbb.",
+    "output": "get_stop_info(feed_id=\"vbb\", stop_id=\"1234\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 82,
+    "title": "Departures vbb/5678",
+    "input": "Next departures from stop 5678 in feed vbb.",
+    "output": "get_departures(feed_id=\"vbb\", stop_id=\"5678\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 83,
+    "title": "Route-filtered vbb/5678",
+    "input": "Next U1 departures from stop 5678 in vbb.",
+    "output": "get_departures(feed_id=\"vbb\", stop_id=\"5678\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 84,
+    "title": "Stop info vbb/5678",
+    "input": "Details for stop 5678 in feed vbb.",
+    "output": "get_stop_info(feed_id=\"vbb\", stop_id=\"5678\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 85,
+    "title": "Departures vbb/9012",
+    "input": "Next departures from stop 9012 in feed vbb.",
+    "output": "get_departures(feed_id=\"vbb\", stop_id=\"9012\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 86,
+    "title": "Route-filtered vbb/9012",
+    "input": "Next U1 departures from stop 9012 in vbb.",
+    "output": "get_departures(feed_id=\"vbb\", stop_id=\"9012\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 87,
+    "title": "Stop info vbb/9012",
+    "input": "Details for stop 9012 in feed vbb.",
+    "output": "get_stop_info(feed_id=\"vbb\", stop_id=\"9012\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 88,
+    "title": "Departures sbahn/1234",
+    "input": "Next departures from stop 1234 in feed sbahn.",
+    "output": "get_departures(feed_id=\"sbahn\", stop_id=\"1234\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 89,
+    "title": "Route-filtered sbahn/1234",
+    "input": "Next U1 departures from stop 1234 in sbahn.",
+    "output": "get_departures(feed_id=\"sbahn\", stop_id=\"1234\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 90,
+    "title": "Stop info sbahn/1234",
+    "input": "Details for stop 1234 in feed sbahn.",
+    "output": "get_stop_info(feed_id=\"sbahn\", stop_id=\"1234\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 91,
+    "title": "Departures sbahn/5678",
+    "input": "Next departures from stop 5678 in feed sbahn.",
+    "output": "get_departures(feed_id=\"sbahn\", stop_id=\"5678\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 92,
+    "title": "Route-filtered sbahn/5678",
+    "input": "Next U1 departures from stop 5678 in sbahn.",
+    "output": "get_departures(feed_id=\"sbahn\", stop_id=\"5678\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 93,
+    "title": "Stop info sbahn/5678",
+    "input": "Details for stop 5678 in feed sbahn.",
+    "output": "get_stop_info(feed_id=\"sbahn\", stop_id=\"5678\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 94,
+    "title": "Departures sbahn/9012",
+    "input": "Next departures from stop 9012 in feed sbahn.",
+    "output": "get_departures(feed_id=\"sbahn\", stop_id=\"9012\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 95,
+    "title": "Route-filtered sbahn/9012",
+    "input": "Next U1 departures from stop 9012 in sbahn.",
+    "output": "get_departures(feed_id=\"sbahn\", stop_id=\"9012\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 96,
+    "title": "Stop info sbahn/9012",
+    "input": "Details for stop 9012 in feed sbahn.",
+    "output": "get_stop_info(feed_id=\"sbahn\", stop_id=\"9012\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 97,
+    "title": "Departures regional/1234",
+    "input": "Next departures from stop 1234 in feed regional.",
+    "output": "get_departures(feed_id=\"regional\", stop_id=\"1234\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 98,
+    "title": "Route-filtered regional/1234",
+    "input": "Next U1 departures from stop 1234 in regional.",
+    "output": "get_departures(feed_id=\"regional\", stop_id=\"1234\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 99,
+    "title": "Stop info regional/1234",
+    "input": "Details for stop 1234 in feed regional.",
+    "output": "get_stop_info(feed_id=\"regional\", stop_id=\"1234\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 100,
+    "title": "Departures regional/5678",
+    "input": "Next departures from stop 5678 in feed regional.",
+    "output": "get_departures(feed_id=\"regional\", stop_id=\"5678\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 101,
+    "title": "Route-filtered regional/5678",
+    "input": "Next U1 departures from stop 5678 in regional.",
+    "output": "get_departures(feed_id=\"regional\", stop_id=\"5678\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 102,
+    "title": "Stop info regional/5678",
+    "input": "Details for stop 5678 in feed regional.",
+    "output": "get_stop_info(feed_id=\"regional\", stop_id=\"5678\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 103,
+    "title": "Departures regional/9012",
+    "input": "Next departures from stop 9012 in feed regional.",
+    "output": "get_departures(feed_id=\"regional\", stop_id=\"9012\", limit=5)",
+    "explanation": "Default next-5 query."
+  },
+  {
+    "id": 104,
+    "title": "Route-filtered regional/9012",
+    "input": "Next U1 departures from stop 9012 in regional.",
+    "output": "get_departures(feed_id=\"regional\", stop_id=\"9012\", route_id=\"U1\", limit=3)",
+    "explanation": "Filter by route."
+  },
+  {
+    "id": 105,
+    "title": "Stop info regional/9012",
+    "input": "Details for stop 9012 in feed regional.",
+    "output": "get_stop_info(feed_id=\"regional\", stop_id=\"9012\")",
+    "explanation": "Single-stop details."
+  },
+  {
+    "id": 106,
+    "title": "Wheelchair info",
+    "input": "Does Praterstern have wheelchair access?",
+    "output": "get_stop_info(feed_id=\"wien\", stop_id=\"1234\")",
+    "explanation": "Read wheelchair_boarding."
+  },
+  {
+    "id": 107,
+    "title": "Station vs platform",
+    "input": "Is stop 1234 a station or a platform?",
+    "output": "get_stop_info(feed_id=\"wien\", stop_id=\"1234\")",
+    "explanation": "location_type hierarchy."
+  },
+  {
+    "id": 108,
+    "title": "Stop coordinates",
+    "input": "Give me coordinates of Karlsplatz.",
+    "output": "get_stop_info(feed_id=\"wien\", stop_id=\"5678\")",
+    "explanation": "stop_lat/stop_lon."
+  },
+  {
+    "id": 109,
+    "title": "Unknown feed error",
+    "input": "Next departures from stop 1 in feed unknown-feed.",
+    "output": "get_departures(feed_id=\"unknown-feed\", stop_id=\"1\")",
+    "explanation": "success:false, Feed not found."
+  },
+  {
+    "id": 110,
+    "title": "Guessed stop id",
+    "input": "Departures for stop 99999.",
+    "output": "get_departures(feed_id=\"wien\", stop_id=\"99999\")",
+    "explanation": "success:false - resolve first."
+  },
+  {
+    "id": 111,
+    "title": "Evening frequency",
+    "input": "How frequent is the U6 in the evening?",
+    "output": "get_departures(feed_id=\"wien\", stop_id=\"1234\", route_id=\"U6\", limit=15)",
+    "explanation": "Large limit to inspect spread."
+  },
+  {
+    "id": 112,
+    "title": "First and last trip",
+    "input": "First and last departure from Westbahnhof.",
+    "output": "get_departures(feed_id=\"wien\", stop_id=\"3456\", limit=20)",
+    "explanation": "Chronologically sorted."
+  },
+  {
+    "id": 113,
+    "title": "Late night service",
+    "input": "Anything after midnight?",
+    "output": "get_departures(feed_id=\"wien\", stop_id=\"1234\", limit=10)",
+    "explanation": "Honest empty result if none."
+  },
+  {
+    "id": 114,
+    "title": "All routes at stop",
+    "input": "Which routes serve this stop?",
+    "output": "get_departures(feed_id=\"wien\", stop_id=\"1234\", limit=20)",
+    "explanation": "Distinct route ids."
+  },
+  {
+    "id": 115,
+    "title": "Invalid URL",
+    "input": "Add feed with a bogus URL.",
+    "output": "add_feed(feed_id=\"bad\", url=\"https://example.com/not-a-zip\")",
+    "explanation": "Validation error, prior data kept."
+  },
+  {
+    "id": 116,
+    "title": "Shutdown",
+    "input": "Please shut down the server.",
+    "output": "shutdown()",
+    "explanation": "Graceful exit."
+  },
+  {
+    "id": 117,
+    "title": "Multi-feed compare",
+    "input": "Compare evening service of two operators.",
+    "output": "get_departures(feed_id=\"a\", stop_id=\"1\", limit=15)",
+    "explanation": "Per-feed comparison."
+  },
+  {
+    "id": 118,
+    "title": "Trip planning",
+    "input": "I need to get to the airport by 9.",
+    "output": "find_stops(feed_id=\"wien\", query=\"Hauptbahnhof\") then get_departures(...)",
+    "explanation": "Resolve then departures."
+  },
+  {
+    "id": 119,
+    "title": "Onboarding probe",
+    "input": "Verify the new feed works.",
+    "output": "find_stops(feed_id=\"new\", query=\"Stephansplatz\", limit=3)",
+    "explanation": "Smoke test after add_feed."
+  },
+  {
+    "id": 120,
+    "title": "Skills manifest",
+    "input": "What do you know about yourself?",
+    "output": "GET /api/skills",
+    "explanation": "Skill manifest via REST."
+  },
+  {
+    "id": 121,
+    "title": "LLM providers",
+    "input": "Is Ollama available?",
+    "output": "GET /api/llm/providers",
+    "explanation": "Probe 11434/1234."
+  },
+  {
+    "id": 122,
+    "title": "Error logs",
+    "input": "Show recent errors.",
+    "output": "GET /api/logs?limit=20&level=ERROR",
+    "explanation": "Ring buffer query."
+  },
+  {
+    "id": 123,
+    "title": "Diagnostics",
+    "input": "What tools do you have?",
+    "output": "GET /api/v1/diagnostics",
+    "explanation": "Tool list + system info."
+  },
+  {
+    "id": 124,
+    "title": "Capabilities",
+    "input": "What features are enabled?",
+    "output": "GET /api/capabilities",
+    "explanation": "Feature flags."
+  },
+  {
+    "id": 125,
+    "title": "Health via curl",
+    "input": "Health check",
+    "output": "curl http://127.0.0.1:10913/health",
+    "explanation": "Liveness endpoint."
+  }
 ]

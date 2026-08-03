@@ -23,3 +23,13 @@ build/
 native/
 web_sota/
 scripts/
+
+# Staged bundle copy (refreshed by mcpb-pack.ps1), runtime data, reports
+mcpb/
+cache/
+data/
+reports/
+
+# Backups from batch edits
+*.bak
+*.bak.*

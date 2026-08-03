@@ -1,0 +1,9 @@
+{
+  "auto_load": ["session-start"],
+  "skills": {
+    "session-start": {
+      "path": "session-start/SKILL.md",
+      "auto_load": true
+    }
+  }
+}

@@ -4,11 +4,25 @@ $RepoName = Split-Path -Leaf $Root
 $Triple = "x86_64-pc-windows-msvc"
 $ResourceDir = "$PSScriptRoot\resources"
 $DevDir = "$PSScriptRoot\binaries"
+$BackendPort = 10913
 New-Item -ItemType Directory -Force -Path $ResourceDir, $DevDir | Out-Null
 
 Write-Host "=== ${RepoName} Tauri Release Build ===" -ForegroundColor Cyan
 
-# Step 1: TypeScript lint gate + frontend build
+# Step 0: Verify API_BASE matches backend port (catches "Failed to fetch" before Tauri build)
+$apiFile = Join-Path $Root "web_sota\src\lib\api.ts"
+if (Test-Path $apiFile) {
+    $apiContent = Get-Content $apiFile -Raw
+    if ($apiContent -match "127.0.0.1:(\d+)") {
+        $apiPort = [int]$Matches[1]
+        if ($apiPort -ne $BackendPort) {
+            throw "API_BASE in $apiFile points to port $apiPort but backend serves on $BackendPort. In dev Vite proxies work, in prod/NSIS this gives 'Failed to fetch'."
+        }
+        Write-Host "  API_BASE port: $apiPort (matches backend) OK" -ForegroundColor Green
+    }
+}
+
+# Step 1: TypeScript lint gate + React frontend build
 $frontendDirs = @("web_sota", "webapp/frontend", "webapp")
 foreach ($dir in $frontendDirs) {
     $frontend = Join-Path $Root $dir
@@ -33,49 +47,67 @@ foreach ($dir in $frontendDirs) {
     }
 }
 
-# Step 2: PyInstaller backend (onefile)
+# Step 2: Verify entry point exists before PyInstaller
 Write-Host "-> [2/4] PyInstaller backend..." -ForegroundColor Yellow
 $specFile = "$Root\${RepoName}-backend.spec"
-if (Test-Path $specFile) {
-    Push-Location $Root
-    # Patch fastmcp to not crash on missing metadata (dist-info stripped below)
-    $fm = "$Root\.venv\Lib\site-packages\fastmcp\__init__.py"
-    if (Test-Path $fm) {
-        $c = Get-Content $fm -Raw
-        if ($c -match 'except PackageNotFoundError:\s+    __version__ = _version\("fastmcp"\)') {
-            $c = $c -replace 'except PackageNotFoundError:\s+    __version__ = _version\("fastmcp"\)', 'except PackageNotFoundError:
+if (-not (Test-Path $specFile)) {
+    throw "Backend spec file not found at $specFile - create ${RepoName}-backend.spec before building NSIS installer."
+}
+$entryFile = "$Root\run_server.py"
+if (-not (Test-Path $entryFile)) {
+    throw "run_server.py not found at $entryFile - the spec file references this as the entry point."
+}
+
+Push-Location $Root
+# Patch fastmcp to not crash on missing metadata (dist-info stripped below)
+$fm = "$Root\.venv\Lib\site-packages\fastmcp\__init__.py"
+if (Test-Path $fm) {
+    $c = Get-Content $fm -Raw
+    if ($c -match 'except PackageNotFoundError:\s+    __version__ = _version\("fastmcp"\)') {
+        $c = $c -replace 'except PackageNotFoundError:\s+    __version__ = _version\("fastmcp"\)', 'except PackageNotFoundError:
     try:
         __version__ = _version("fastmcp")
     except PackageNotFoundError:
         __version__ = "0.0.0"'
-            Set-Content $fm -Value $c -Encoding utf8
-            Write-Host "  Patched fastmcp metadata fallback" -ForegroundColor Yellow
-        }
+        Set-Content $fm -Value $c -Encoding utf8
+        Write-Host "  Patched fastmcp metadata fallback" -ForegroundColor Yellow
     }
-    uv run pyinstaller "$specFile" --clean --noconfirm
-    if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed with exit code $LASTEXITCODE" }
-    Pop-Location
-} else {
-    Write-Host "  WARNING: spec file not found at $specFile - using existing backend exe if present" -ForegroundColor DarkYellow
 }
+# Ensure pyinstaller runs in the project venv, not the global tool environment
+$pyiExe = "$Root\.venv\Scripts\pyinstaller.exe"
+if (-not (Test-Path $pyiExe)) {
+    Write-Host "  Installing pyinstaller in project venv..." -ForegroundColor Yellow
+    uv add --dev pyinstaller
+}
+# Pre-clean stale exe to avoid PermissionError on rebuild
+Remove-Item "$Root\dist\${RepoName}-backend.exe" -Force -ErrorAction SilentlyContinue
+& $pyiExe "$specFile" --clean --noconfirm
+if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed with exit code $LASTEXITCODE" }
+Pop-Location
+
+# Size gate: a real onefile PyInstaller binary is >= 5 MB. A runt file means
+# PyInstaller silently failed (missing entry point, missing deps, etc.).
+$src = "$Root\dist\${RepoName}-backend.exe"
+if (-not (Test-Path $src)) { throw "Backend exe not found at $src - PyInstaller step failed" }
+$sizeMB = (Get-Item $src).Length / 1MB
+if ($sizeMB -lt 5) {
+    throw "Backend exe is only $([math]::Round($sizeMB, 1)) MB at $src - PyInstaller produced an empty/broken binary. Check $Root\build\${RepoName}-backend\warn-*.txt for hidden import warnings."
+}
+Write-Host "  Backend exe: $([math]::Round($sizeMB, 1)) MB" -ForegroundColor Green
 
 # Step 3: Embed in Tauri resources (+ dev fallback)
 Write-Host "-> [3/4] Embedding backend..." -ForegroundColor Yellow
-$src = "$Root\dist\${RepoName}-backend.exe"
-if (-not (Test-Path $src)) { throw "Backend exe not found at $src - PyInstaller step failed" }
 Copy-Item $src "$ResourceDir\${RepoName}-backend.exe" -Force
 Copy-Item $src "$DevDir\${RepoName}-backend-$Triple.exe" -Force
-Write-Host "  Backend exe: $((Get-Item $src).Length / 1MB) MB"
 
-# Bundle .env into installer if it exists (survives reinstall, no manual copy needed)
-$envSrc = "$Root\.env"
-if (Test-Path $envSrc) {
-    Copy-Item $envSrc "$ResourceDir\.env" -Force
-    Write-Host "  Bundled .env ($((Get-Item $envSrc).Length) bytes)" -ForegroundColor Green
+# Bundle .env.example (NOT .env - dev .env has personal API keys)
+$envExample = "$Root\.env.example"
+if (Test-Path $envExample) {
+    Copy-Item $envExample "$ResourceDir\.env.example" -Force
+    Write-Host "  Bundled .env.example OK" -ForegroundColor Green
 } else {
-    Write-Host "  WARNING: No .env at repo root - create one from .env.example for credentials" -ForegroundColor DarkYellow
-    Set-Content -Path "$ResourceDir\.env" -Value "# Empty - configure via Settings page" -Encoding utf8
-} -ForegroundColor Green
+    Write-Host "  WARNING: .env.example not found at repo root" -ForegroundColor DarkYellow
+}
 
 # Step 4: Single NSIS installer
 Write-Host "-> [4/4] Tauri NSIS bundle..." -ForegroundColor Yellow
@@ -90,9 +122,16 @@ $distDir = Join-Path $Root "dist"
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
 $nsisDir = "$PSScriptRoot\target\release\bundle\nsis"
 if (Test-Path $nsisDir) { Copy-Item "$nsisDir\*-setup.exe" "$distDir\" -Force }
-$strayExe = "$PSScriptRoot\target\release\gtfs-mcp-backend.exe"
-if (Test-Path $strayExe) { Remove-Item $strayExe -Force; Write-Host "  Cleaned stray: $strayExe" -ForegroundColor DarkGray }
+
+# NSIS size gate: installer must be >= 1 MB (empty shell = broken bundle)
+$setup = Get-ChildItem "$nsisDir\*-setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($setup) {
+    $setupMB = $setup.Length / 1MB
+    if ($setupMB -lt 1) {
+        throw "NSIS installer is only $([math]::Round($setupMB, 1)) MB - likely a shell with no embedded backend."
+    }
+    Write-Host "  Installer: $([math]::Round($setupMB, 1)) MB OK" -ForegroundColor Green
+}
 
 Write-Host "=== Build complete ===" -ForegroundColor Green
 Write-Host "Ship: $nsisDir\*.exe"
-

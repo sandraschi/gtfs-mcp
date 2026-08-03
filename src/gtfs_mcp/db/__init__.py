@@ -3,6 +3,7 @@
 This module provides database initialization and session management for the GTFS MCP server.
 """
 
-from .models import Base, get_db, init_db  # noqa: F401
+from .database import get_db, init_db
+from .models import Base
 
 __all__ = ["Base", "get_db", "init_db"]

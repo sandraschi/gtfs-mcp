@@ -84,3 +84,32 @@ coverage.xml
 target/
 
 _dashboard/
+
+# Fleet audit reports (regenerable snapshots)
+reports/
+*.ghaudit-timestamp
+.assess-fix-timestamp
+
+# Node (web_sota)
+node_modules/
+web_sota/node_modules/
+
+# Tauri native build artifacts
+native/target/
+native/gen/
+native/resources/*.exe
+native/binaries/*.exe
+
+# MCPB bundles + staged copy
+*.mcpb
+mcpb/
+
+# Runtime data
+cache/
+data/
+logs/
+
+# Backups from batch edits
+*.bak
+*.bak.*
+*.bak-*
