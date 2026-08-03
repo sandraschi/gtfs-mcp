@@ -1,11 +1,16 @@
 import {
+  BookOpen,
   Bot,
   ChevronLeft,
   ChevronRight,
+  Database,
+  HelpCircle,
   LayoutDashboard,
+  MapPin,
   ScrollText,
   Server,
   Settings,
+  Wrench,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/common/utils";
@@ -20,9 +25,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   const navItems = [
     { href: "/", label: "Overview", icon: LayoutDashboard },
-    { href: "/chat", label: "AI Command", icon: Bot },
+    { href: "/feeds", label: "Feeds", icon: Database },
+    { href: "/stops", label: "Stops", icon: MapPin },
+    { href: "/chat", label: "Chat", icon: Bot },
+    { href: "/tools", label: "Tools", icon: Wrench },
+    { href: "/skills", label: "Skills", icon: BookOpen },
     { href: "/settings", label: "Settings", icon: Settings },
     { href: "/logging", label: "Logging", icon: ScrollText },
+    { href: "/help", label: "Help", icon: HelpCircle },
   ];
 
   return (
@@ -48,9 +58,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <Link
               key={item.href}
               to={item.href}
+              aria-label={item.label}
               className={cn(
                 "group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white",
-                isActive ? "bg-slate-800 text-white" : "text-slate-400",
+                isActive ? "bg-slate-800 text-white" : "text-slate-300",
                 collapsed ? "justify-center" : "justify-start",
               )}
             >

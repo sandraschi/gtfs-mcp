@@ -4,9 +4,7 @@
     "version": "0.1.0",
     "identifier": "com.sandraschi.gtfs-mcp",
     "build": {
-        "frontendDist": "../web_sota/dist",
-        "beforeDevCommand": "npm --prefix ../web_sota run dev",
-        "beforeBuildCommand": "npm --prefix ../web_sota run build"
+        "frontendDist": "../web_sota/dist"
     },
     "app": {
         "windows": [

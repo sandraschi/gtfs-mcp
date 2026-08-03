@@ -62,8 +62,12 @@ types:
 
 # ── Webapp ────────────────────────────────────────────────────────────────────
 
-# Biome check on the webapp
+# Playwright e2e tests (backend + frontend auto-start, reuse if running)
 e2e:
+    @cd web_sota && npx playwright test
+
+# Biome check on the webapp
+biome:
     @cd web_sota && npx biome check src/
 
 # Clean build artifacts

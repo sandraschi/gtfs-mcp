@@ -43,6 +43,7 @@ dev = [
     "httpx>=0.24.0",
     "ruff>=0.16.0,<0.17",
     "pyright>=1.1.300",
+    "pyinstaller>=6.21.0",
 ]
 
 [tool.pytest.ini_options]

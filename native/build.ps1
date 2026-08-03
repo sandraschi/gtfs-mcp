@@ -73,6 +73,20 @@ if (Test-Path $fm) {
         Write-Host "  Patched fastmcp metadata fallback" -ForegroundColor Yellow
     }
 }
+# Patch opentelemetry context loader: entry-point discovery fails in frozen
+# binaries (stripped dist-info) -> StopIteration at import. Fall back to the
+# contextvars implementation directly.
+$otel = "$Root\.venv\Lib\site-packages\opentelemetry\context\__init__.py"
+if (Test-Path $otel) {
+    $c = [System.IO.File]::ReadAllText($otel)
+    $old = "        return next(  # type: ignore`n            iter(  # type: ignore`n                entry_points(  # type: ignore`n                    group=`"opentelemetry_context`",`n                    name=default_context,`n                )`n            )`n        ).load()()"
+    $new = "        `$entry = list(entry_points(group=`"opentelemetry_context`", name=default_context))`n        if `$entry:`n            return `$entry[0].load()()`n        from opentelemetry.context.contextvars_context import ContextVarsRuntimeContext`n        return ContextVarsRuntimeContext()"
+    if ($c.Contains("name=default_context,`n                )")) {
+        $c = $c.Replace($old, $new)
+        [System.IO.File]::WriteAllText($otel, $c)
+        Write-Host "  Patched opentelemetry context fallback" -ForegroundColor Yellow
+    }
+}
 # Ensure pyinstaller runs in the project venv, not the global tool environment
 $pyiExe = "$Root\.venv\Scripts\pyinstaller.exe"
 if (-not (Test-Path $pyiExe)) {

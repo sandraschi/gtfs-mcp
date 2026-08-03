@@ -71,6 +71,7 @@ function buildSystemPrompt(
 
 const CHAT_ENDPOINT = "/api/llm/chat/stream";
 const SKILLS_ENDPOINT = "/api/skills";
+const PROVIDERS_ENDPOINT = "/api/llm/providers";
 
 export function Chat() {
   const [chat, setChat] = useState<Message[]>(() => loadHistory());
@@ -106,12 +107,19 @@ export function Chat() {
   useEffect(() => {
     (async () => {
       try {
-        const r = await fetch("http://localhost:11434/api/tags", {
-          signal: AbortSignal.timeout(3000),
+        const r = await fetch(PROVIDERS_ENDPOINT, {
+          signal: AbortSignal.timeout(5000),
         });
-        setProviderOk(r.ok);
+        if (r.ok) {
+          const d = await r.json();
+          const models = d?.ollama ?? [];
+          setProviderOk(Array.isArray(models) && models.length > 0);
+          return;
+        }
+        setProviderOk(false);
       } catch {
         /* stays optimistic */
+        setProviderOk(false);
       }
     })();
   }, []);
@@ -133,7 +141,7 @@ export function Chat() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: text.trim(),
+            model: localStorage.getItem("llm_model") || "llama3.2:3b",
             system: buildSystemPrompt(personality, customPrompt),
             messages: chat
               .slice(-20)
@@ -149,6 +157,7 @@ export function Chat() {
         };
         setChat((prev) => [...prev, partial]);
 
+        // Backend streams raw Ollama NDJSON: {"message":{"role":"assistant","content":"..."}}
         const reader = r.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
@@ -159,22 +168,24 @@ export function Chat() {
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
           for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const data = line.slice(6).trim();
-            if (data === "[DONE]") break;
+            if (!line.trim()) continue;
             try {
-              const parsed = JSON.parse(data);
-              if (parsed.c) {
-                partial.content += parsed.c;
+              const parsed = JSON.parse(line);
+              if (parsed.error) throw new Error(parsed.error);
+              const chunk = parsed?.message?.content;
+              if (chunk) {
+                partial.content += chunk;
                 setChat((prev) => {
                   const c = [...prev];
                   c[c.length - 1] = { ...partial };
                   return c;
                 });
               }
-              if (parsed.error) throw new Error(parsed.error);
-            } catch {
-              /* skip */
+              if (parsed?.done) break;
+            } catch (err) {
+              if (err instanceof Error && err.message !== "Unexpected token") {
+                throw err;
+              }
             }
           }
         }

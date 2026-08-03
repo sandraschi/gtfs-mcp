@@ -4,6 +4,8 @@
     "operator_exe": "gtfs-mcp-native.exe",
     "backend_process_names": ["gtfs-mcp-native", "gtfs-mcp-backend"],
     "backend_port": 10913,
+    "frontend_port": 10912,
+    "backend_module": "gtfs_mcp.main",
     "health_path": "/api/v1/health",
     "diagnostics_path": "/api/v1/diagnostics",
     "feature_smoke_path": "/api/v1/status",
@@ -11,6 +13,7 @@
     "nsis_glob": "native/target/release/bundle/nsis/Gtfs MCP_*_x64-setup.exe",
     "bridge_ok_text": "GTFS MCP",
     "uninstall_registry_filter": "*Gtfs MCP*",
+    "connected_badge_text": "connected",
     "nav_routes": [
         ["Dashboard", "Gtfs MCP Dashboard"],
         ["Chat", "Chat"],

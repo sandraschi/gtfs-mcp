@@ -5,6 +5,7 @@ a = Analysis(
     hiddenimports=['uvicorn.logging','uvicorn.loops','uvicorn.loops.asyncio','uvicorn.protocols','uvicorn.protocols.http','uvicorn.protocols.http.httptools_impl','uvicorn.protocols.http.h11_impl','uvicorn.lifespan','uvicorn.lifespan.on'],
     excludes=['tkinter','setuptools','pip','wheel','test','tests','unittest','_distutils_hack'],
     noarchive=True,
+    runtime_hooks=['hooks/runtime-opentelemetry.py'],
 )
 # Strip .dist-info but preserve metadata for packages that need it at runtime
 _keep_dist = ['fastmcp-', 'mcp-', 'prefab_ui-', 'opentelemetry-', 'email_validator-']
