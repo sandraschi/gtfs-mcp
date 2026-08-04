@@ -2,6 +2,26 @@
 
 All notable changes to gtfs-mcp are documented here.
 
+## [0.1.0] - 2026-08-04 (GTFS explainer)
+
+### Added
+
+- **Dashboard hero**: acronym expansion ("General Transit Feed Specification"),
+  compact explainer of what GTFS is, and scale stats (10,000+ public feeds;
+  Vienna: 4,624 stops, 326k trips, 6.1M departure times).
+- **Help page "What is GTFS?" card**: full background - acronym, history
+  timeline (2005 TriMet/Google Portland -> 2006 open spec -> 2010 renamed
+  General -> 2022 MobilityData/ISO 17639), who publishes (Wiener Linien,
+  MTA, TfL, BVG/VBB, RATP/IDFM, CTA, MBTA, TTC, SBB; consumers Google Maps,
+  Apple Maps, Transit, Moovit, Citymapper), the scale of a single city feed,
+  and the parsing gnarliness (times >24:00, station hierarchies, missing
+  calendars, malformed rows).
+- **README "What is GTFS?" section** (history table, adoption, scale,
+  parsing notes) and a **Tech Stack table** (FastMCP 3.4, FastAPI, SQLite,
+  React 19/Vite 7/Tailwind 3, Tauri 2/NSIS, ruff/pyright/pytest/Biome/
+  Playwright).
+- Playwright e2e assertion for the dashboard hero (13 tests).
+
 ## [0.1.0] - 2026-08-04 (incremental)
 
 ### Added
