@@ -163,6 +163,17 @@ re-downloaded when expired, force-updated, or moved to a different URL. The
 Vienna (Wiener Linien) feed is the default and loads automatically on first
 start.
 
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| MCP framework | FastMCP 3.4 (`fastmcp>=3.4.4,<4`), Prefab UI (`prefab-ui>=0.14.0`) |
+| Backend | Python 3.12, FastAPI + uvicorn, SQLAlchemy async + aiosqlite, aiohttp |
+| Persistence | SQLite (`data/gtfs_mcp.db`) - parsed feed rows + feed registry |
+| Webapp | React 19, Vite 7, TypeScript 5.9, TailwindCSS 3.4, lucide-react, Radix UI, @tanstack/react-query, @tauri-apps/api |
+| Desktop | Tauri 2 (Rust) + PyInstaller backend + NSIS installer |
+| Tooling | uv, ruff, pyright, pytest (47% coverage), Biome, Playwright (13 e2e), just |
+
 ## Development
 
 ### Project Structure
