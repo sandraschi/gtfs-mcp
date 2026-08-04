@@ -13,6 +13,50 @@ A FastMCP 3.4 server for downloading, parsing, and serving GTFS (General Transit
 Feed Specification) data. Provides a standardized API for accessing transit data
 from various agencies, handling the quirks of real-world GTFS feeds.
 
+## What is GTFS?
+
+**GTFS** = **General Transit Feed Specification** — the open standard that
+transit agencies worldwide use to publish their schedules as data. A GTFS
+"feed" is a zip archive of CSV tables: stops, routes, trips, stop times, and
+the calendar that decides which trips run on which days. If you can look up a
+departure time in any transit app, a GTFS feed is almost certainly behind it.
+
+### History
+
+| Year | Event |
+|------|-------|
+| 2005 | Google and **TriMet** (Portland) design the format to power Google Maps Transit; Portland is the first launch city |
+| 2006 | Spec published openly (then "Google Transit Feed Specification") |
+| 2010 | Renamed **General Transit Feed Specification**, handed to the transit community |
+| 2022 | Stewardship with **MobilityData** (gtfs.org); ratified as **ISO 17639:2022** |
+
+### Who publishes it
+
+Thousands of agencies and metros: **Wiener Linien (Vienna)**, MTA (New York),
+TfL (London), BVG/VBB (Berlin), RATP/IDFM (Paris), CTA (Chicago), MBTA
+(Boston), TTC (Toronto), SBB (Switzerland), and many more. The MobilityData
+catalog tracks **10,000+ public feeds**. Consumers include Google Maps, Apple
+Maps, Transit, Moovit, Citymapper, and OpenTripPlanner.
+
+### The scale
+
+A single city feed is a small database. The Vienna feed this server uses
+contains **4,624 stops, 681 routes, 326,812 trips, and 6.1 million stop
+times**. Feeds routinely ship as 50-300 MB zips.
+
+### Why parsing is gnarly
+
+- CSV column order and presence vary per agency; optional tables get omitted
+- Midnight-crossing trips use times like `24:15:00` (00:15 the next day)
+- Station hierarchies: platforms, entrances and parent stations are separate
+  stop records linked by ids
+- Some feeds publish only `calendar_dates.txt` exceptions, no regular calendar
+- Malformed rows, BOM markers, duplicate stop names and agency-specific extra
+  columns are common
+
+This server exists to absorb that variety — the parser normalizes, tolerates,
+and indexes the data so you can just ask for departures.
+
 ## Features
 
 - **GTFS Feed Management**: Download and update GTFS feeds from any URL

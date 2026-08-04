@@ -81,6 +81,49 @@ export function Dashboard() {
 
   return (
     <div data-testid="dashboard" className="space-y-6">
+      {/* Hero — what GTFS is, compact */}
+      <section
+        data-testid="hero"
+        className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-blue-950/80 via-slate-950 to-slate-950 px-6 py-8"
+      >
+        <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-blue-600/10 blur-3xl" />
+        <div className="absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-emerald-600/10 blur-3xl" />
+        <div className="relative space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-blue-400">
+            General Transit Feed Specification
+          </p>
+          <h1 className="max-w-2xl text-3xl font-bold tracking-tight text-white">
+            Public transit schedules as data
+          </h1>
+          <p className="max-w-2xl text-sm leading-relaxed text-slate-300">
+            GTFS is the open format that transit agencies worldwide use to
+            publish their timetables: every stop, route, trip, and departure
+            time. This server downloads such feeds, tames their quirks, and
+            answers questions like{" "}
+            <span className="text-slate-100">
+              "when does the next U1 leave Karlsplatz?"
+            </span>
+          </p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {[
+              ["10,000+", "public GTFS feeds"],
+              ["4,624", "stops in the Vienna feed"],
+              ["326k", "trips per day (Vienna)"],
+              ["6.1M", "departure times (Vienna)"],
+            ].map(([value, label]) => (
+              <div
+                key={label}
+                data-testid="hero-stat"
+                className="rounded-xl border border-slate-700/60 bg-slate-900/60 px-3 py-2"
+              >
+                <p className="text-lg font-bold text-white">{value}</p>
+                <p className="text-[11px] text-slate-400">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-white">

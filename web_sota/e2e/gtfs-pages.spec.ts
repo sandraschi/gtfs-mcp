@@ -3,6 +3,15 @@ import { expect, test } from "@playwright/test";
 const FE = "http://127.0.0.1:10912";
 
 test.describe("GTFS Domain Pages", () => {
+  test("Dashboard hero explains GTFS", async ({ page }) => {
+    await page.goto(FE);
+    await expect(page.locator("[data-testid='hero']")).toBeVisible();
+    await expect(page.locator("[data-testid='hero']")).toContainText(
+      "General Transit Feed Specification",
+    );
+    await expect(page.locator("[data-testid='hero-stat']").first()).toBeVisible();
+  });
+
   test("Feeds page loads and renders", async ({ page }) => {
     await page.goto(`${FE}/feeds`);
     await expect(page.locator("[data-testid='feeds-page']")).toBeVisible();
