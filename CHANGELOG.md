@@ -2,6 +2,21 @@
 
 All notable changes to gtfs-mcp are documented here.
 
+## [0.1.0] - 2026-08-04 (incremental)
+
+### Added
+
+- **SQLite persistence for parsed feed data** (`data/gtfs_mcp.db`): every
+  parsed row (stops, routes, trips, stop_times, calendar, calendar_dates,
+  agencies, feed_info) is stored as JSON blobs with original order. Feeds are
+  restored from the store on restart - no re-download. A different feed URL
+  invalidates the cached copy.
+- **Vienna is the default feed**: `GTFS_MCP_DEFAULT_FEED_URL` now defaults to
+  the Wiener Linien GTFS zip; loaded at startup as feed id `default` unless a
+  stored copy already exists.
+- Persistence test suite: round-trip, URL invalidation, `load_all_from_db`
+  (16 tests, 57% coverage).
+
 ## [0.1.0] - 2026-08-03
 
 ### Security

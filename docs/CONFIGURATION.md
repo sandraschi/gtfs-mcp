@@ -7,7 +7,8 @@
 | `GTFS_MCP_PORT` | 10913 | HTTP port for the backend |
 | `GTFS_MCP_HOST` | 127.0.0.1 | Bind address |
 | `GTFS_MCP_LOG_LEVEL` | INFO | DEBUG/INFO/WARNING/ERROR/CRITICAL |
-| `GTFS_MCP_DEFAULT_FEED_URL` | - | GTFS zip URL loaded at startup |
+| `GTFS_MCP_DEFAULT_FEED_URL` | Wiener Linien GTFS zip | Feed loaded at startup (Vienna default, feed id `default`) |
+| `GTFS_MCP_DATA_DIR` | `data` | Feed data + SQLite persistence store (`gtfs_mcp.db`) |
 | `GTFS_MCP_UPDATE_INTERVAL` | 86400 | Feed refresh interval (seconds) |
 | `GTFS_MCP_DISCOVERY__TRANSITFEEDS_API_KEY` | - | TransitFeeds API key (feed discovery) |
 | `GTFS_MCP_DISCOVERY__MTA_API_KEY` | - | MTA API key (feed discovery) |
@@ -20,6 +21,15 @@
 
 Copy `.env.example` to `.env` at the repo root to configure. The backend reads
 `.env` from the current working directory.
+
+## Persistence
+
+Parsed feed data (stops, routes, trips, stop_times, calendar, calendar_dates,
+agencies, feed_info) is persisted to SQLite at `<data_dir>/gtfs_mcp.db`. On
+startup every stored feed is restored into memory (`load_all_from_db`) - feeds
+are only re-downloaded when expired, force-updated (`force_update=True`), or
+when the registered URL differs from the stored one. The default Vienna feed
+is loaded as feed id `default` only if no stored copy exists yet.
 
 ## Ports
 

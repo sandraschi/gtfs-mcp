@@ -50,10 +50,19 @@ All tools return `{success, message, ...}` dicts. Mutating: add_feed, shutdown.
 | `GTFS_MCP_PORT` | 10913 | HTTP port |
 | `GTFS_MCP_HOST` | 127.0.0.1 | Bind host |
 | `GTFS_MCP_LOG_LEVEL` | INFO | Log level |
-| `GTFS_MCP_DEFAULT_FEED_URL` | - | Default feed to load at startup |
+| `GTFS_MCP_DEFAULT_FEED_URL` | Wiener Linien GTFS zip | Default feed (Vienna, id `default`) loaded at startup |
+| `GTFS_MCP_DATA_DIR` | `data` | Feed data + `gtfs_mcp.db` persistence store |
 | `GTFS_MCP_DISCOVERY__TRANSITFEEDS_API_KEY` | - | Feed discovery key |
 | `MCP_TRANSPORT` | stdio | stdio/http/sse (dual transport) |
 | `MCP_PORT` / `PORT` | - | run_server.py: set -> HTTP mode |
+
+## Persistence
+
+Parsed feed rows are stored in SQLite (`<data_dir>/gtfs_mcp.db`) as JSON
+blobs keyed by feed + table (order preserved). On restart `load_all_from_db`
+restores every stored feed into memory - no re-download unless the feed is
+expired, force-updated, or moved to a different URL. The Vienna (Wiener
+Linien) feed is the default and is loaded as feed id `default` on first run.
 
 ## Architecture
 

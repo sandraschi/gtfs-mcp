@@ -17,6 +17,10 @@ from various agencies, handling the quirks of real-world GTFS feeds.
 
 - **GTFS Feed Management**: Download and update GTFS feeds from any URL
 - **Robust Parser**: Handles malformed/missing data with grace
+- **SQLite Persistence**: Parsed feeds are stored in `data/gtfs_mcp.db` and
+  restored on restart - no re-download, data survives server restarts
+- **Vienna by default**: the Wiener Linien GTFS feed loads automatically as
+  feed id `default` (override via `GTFS_MCP_DEFAULT_FEED_URL`)
 - **7 MCP Tools**: add_feed, list_feeds, find_stops, get_departures, get_stop_info, status, shutdown
 - **RESTful API**: `/v1/feeds`, `/v1/stops/*`, health, capabilities, logs
 - **Local LLM Chat**: Ollama/LM Studio discovery + streaming chat proxy
@@ -99,12 +103,21 @@ curl "http://127.0.0.1:10913/v1/stops/1234/departures?feed_id=wien&limit=5"
 |-----|---------|---------|
 | `GTFS_MCP_PORT` | 10913 | HTTP port |
 | `GTFS_MCP_HOST` | 127.0.0.1 | Bind host |
-| `GTFS_MCP_DEFAULT_FEED_URL` | - | Default feed loaded at startup |
+| `GTFS_MCP_DEFAULT_FEED_URL` | Wiener Linien GTFS zip | Default feed loaded at startup (Vienna) |
+| `GTFS_MCP_DATA_DIR` | `data` | Feed data + `gtfs_mcp.db` persistence store |
 | `GTFS_MCP_DISCOVERY__TRANSITFEEDS_API_KEY` | - | Feed discovery API key |
 | `MCP_TRANSPORT` | stdio | stdio/http/sse transport mode |
 | `MCP_PORT` | - | When set, run_server.py starts HTTP mode |
 
 Copy `.env.example` to `.env` and adjust as needed.
+
+## Persistence
+
+Parsed feed data is stored in SQLite at `<data_dir>/gtfs_mcp.db`. On restart
+the server restores every stored feed into memory - feeds are only
+re-downloaded when expired, force-updated, or moved to a different URL. The
+Vienna (Wiener Linien) feed is the default and loads automatically on first
+start.
 
 ## Development
 
