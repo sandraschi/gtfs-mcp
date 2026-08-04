@@ -197,6 +197,15 @@ just test            # pytest with coverage
 just certify         # ruff + pyright + pytest + tsc + biome
 ```
 
+## Related Projects
+
+- **[mywienerlinien](https://github.com/sandraschi/mywienerlinien)** — Vienna
+  Transit Hub. Consumer of the same Wiener Linien GTFS data: loads the feed
+  into PostgreSQL/PostGIS and shows a live map with schedule-interpolated
+  pseudo-vehicle tracking (Wiener Linien publishes no live vehicle
+  positions). Separate repo for historic reasons; gtfs-mcp is the
+  general-purpose schedule server, mywienerlinien the city-specific app.
+
 ## License
 
 MIT

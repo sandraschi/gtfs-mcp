@@ -57,6 +57,15 @@ const SECTIONS: Array<{
   },
   {
     icon: Globe,
+    title: "Related Projects",
+    lines: [
+      "mywienerlinien (Vienna Transit Hub) - city app consuming the same Wiener Linien GTFS feed: live map with schedule-interpolated pseudo-vehicle tracking, PostGIS backend, ports 3079/5433.",
+      "gtfs-mcp is the general-purpose schedule server; mywienerlinien is the Vienna-specific consumer. Separate repos for historic reasons.",
+      "https://github.com/sandraschi/mywienerlinien",
+    ],
+  },
+  {
+    icon: Globe,
     title: "Resources",
     lines: [
       "docs/CONFIGURATION.md - environment reference.",
