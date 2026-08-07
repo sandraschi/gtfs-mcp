@@ -2,6 +2,32 @@
 
 All notable changes to gtfs-mcp are documented here.
 
+## [0.1.1] - 2026-08-07 (assfix re-run)
+
+### Fixed
+- **Persistence round-trip test fixed** — `get_stop_times` filters from "now" by default; the
+  test's static 08:00 fixture was dropped at runtime. Explicit deterministic window
+  (`datetime(2026, 1, 5, 7, 0)` — a Monday within the fixture calendar) → 16/16 tests pass.
+- **`POST /api/shutdown`** self-termination endpoint added (fleet standard).
+- **Deleted dead `web_sota/backend`** — legacy duplicate (port 8000, CORS `*`) unreferenced by
+  start.ps1/package.json; the real backend is `src/gtfs_mcp/main.py` on 10913.
+
+### Verified fixed since 08-03 (no code change needed this pass)
+- CORS: explicit origins + regex (config.py/main.py/transport), no `["*"]`
+- `.env.example` bundling (native/build.ps1 + tauri.conf.json)
+- MCPB 3-4-100 (system 3253 / user 4235 / examples 125), run_server.py + `__main__.py`
+- `/api/capabilities`, `/api/skills`, `/api/v1/diagnostics`, `/api/v1/status`
+- CUA config on 10913 with nav_routes; `useZoom()` + backend-status listener
+- Pages: Tools, Skills, Help added (9 pages total); dashboard live fetches (no fake KPIs)
+- llms-full.txt regenerated (08-03); @tauri-apps/api in deps; pre-commit + CI present
+
+### Gates (all pass)
+ruff 0 · pyright 0 · pytest 16/16 (cov 57%) · tsc 0 · biome clean
+
+### Remaining (deferred, MEDIUM)
+low-contrast `text-slate-400/500` ×42, `text-xs` ×31, no Prefab cards, no `@mcp.resource`,
+no Zustand store, `@mcp.prompt` absent.
+
 ## [0.1.0] - 2026-08-04 (GTFS explainer)
 
 ### Added

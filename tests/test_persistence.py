@@ -1,5 +1,7 @@
 """Tests for GTFS SQLite persistence (parse -> store -> restore)."""
 
+from datetime import datetime
+
 import pytest
 
 from gtfs_mcp.core.feed_manager import GTFSFeedManager
@@ -69,7 +71,9 @@ async def test_save_and_restore(tmp_path):
         assert restored.loaded
         assert [s["stop_id"] for s in restored.stops] == ["S1", "S2"]
         assert [r["route_id"] for r in restored.routes] == ["R1"]
-        deps = restored.get_stop_times(stop_id="S1", limit=5)
+        # Explicit window over the fixture times (08:00) — get_stop_times
+        # filters departures from "now" by default, which would drop them.
+        deps = restored.get_stop_times(stop_id="S1", limit=5, start_time=datetime(2026, 1, 5, 7, 0))
         assert len(deps) == 1
         assert deps[0]["trip_headsign"] == "Airport"
     finally:

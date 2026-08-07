@@ -1,6 +1,8 @@
 """GTFS MCP Server - Main application entry point."""
 
+import asyncio
 import logging
+import os
 import platform
 import time
 from contextlib import asynccontextmanager
@@ -128,6 +130,18 @@ async def skills():
     from .services.skills import get_skills
 
     return {"skills": get_skills()}
+
+
+@app.post("/api/shutdown")
+async def shutdown():
+    """Graceful self-termination (fleet standard: *_shutdown endpoint)."""
+    async def _stop() -> None:
+        await asyncio.sleep(0.5)
+        logger.info("Shutdown requested via /api/shutdown")
+        os._exit(0)
+
+    asyncio.create_task(_stop())
+    return {"status": "ok", "message": "Shutting down"}
 
 
 @app.get("/skill/{skill_name}")
