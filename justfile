@@ -1,13 +1,13 @@
 set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 import 'scripts/just/fleet.just'
 
-# ── Dashboard ─────────────────────────────────────────────────────────────────
+# --- Dashboard ---
 
 # Open the interactive recipe dashboard in the browser
 default:
     @just --list
 
-# ── Quality ───────────────────────────────────────────────────────────────────
+# --- Quality ---
 
 # Execute repo-wide quality checks (Ruff)
 lint:
@@ -19,7 +19,7 @@ fix:
     uv run ruff check . --fix --unsafe-fixes
     uv run ruff format .
 
-# ── Hardening ─────────────────────────────────────────────────────────────────
+# --- Hardening ---
 
 # Execute Bandit security audit
 check-sec:
@@ -29,7 +29,7 @@ check-sec:
 audit-deps:
     uv run safety check
 
-# ── GTFS Specific ─────────────────────────────────────────────────────────────
+# --- GTFS Specific ---
 
 # Serve the MCP server (stdio for Claude Desktop)
 serve:
@@ -43,7 +43,7 @@ dev:
 run:
     uv run gtfs-mcp
 
-# ── Test ──────────────────────────────────────────────────────────────────────
+# --- Test ---
 
 # Run the test suite
 test:
@@ -60,7 +60,7 @@ types:
     uv run pyright src
     @cd web_sota && npx tsc --noEmit
 
-# ── Webapp ────────────────────────────────────────────────────────────────────
+# --- Webapp ---
 
 # Playwright e2e tests (backend + frontend auto-start, reuse if running)
 e2e:
