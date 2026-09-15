@@ -268,14 +268,14 @@ class GTFSFeedManager:
                 if not (extract_path / file).exists():
                     raise GTFSValidationError(f"Missing required file: {file}")
 
-            # Clear the target directory
+            # Clear the target directory (feed trees are large — off the loop)
             if target_dir.exists():
-                shutil.rmtree(target_dir)
+                await asyncio.to_thread(shutil.rmtree, target_dir)
             target_dir.mkdir(parents=True)
 
             # Move the extracted files to the target directory
             for item in extract_path.glob("*"):
-                shutil.move(str(item), str(target_dir / item.name))
+                await asyncio.to_thread(shutil.move, str(item), str(target_dir / item.name))
 
         logger.info(f"Successfully updated feed {feed_id} from {url}")
         return GTFSFeed(target_dir)
