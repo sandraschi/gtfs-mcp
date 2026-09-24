@@ -1,6 +1,13 @@
 """Pytest configuration and fixtures for GTFS MCP tests."""
 
+import os
 import tempfile
+
+# Keep the FastAPI lifespan from background-booting the real feed manager
+# (it would download Vienna over the network); endpoint tests assert the
+# degraded no-manager behavior and must stay hermetic.
+os.environ.setdefault("GTFS_MCP_SKIP_FEED_BOOT", "1")
+
 from collections.abc import Generator
 from pathlib import Path
 

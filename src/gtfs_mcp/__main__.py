@@ -29,7 +29,9 @@ def main() -> None:
 
         host = args.host or os.getenv("MCP_HOST", "127.0.0.1")
         port = args.port or int(os.getenv("MCP_PORT", "10913"))
-        uvicorn.run(app, host=host, port=port, log_level="debug" if args.debug else "info")
+        # warning, not info: info spams one access-log line per frontend poll
+        # (health/logs/jobs every few seconds) and buries real errors.
+        uvicorn.run(app, host=host, port=port, log_level="debug" if args.debug else "warning")
         return
 
     sys.argv = ["gtfs_mcp", "--stdio"]

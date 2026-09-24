@@ -15,7 +15,7 @@ from .api.llm import router as llm_router
 from .api.v1.endpoints.routes import api_router
 from .config import get_settings
 from .log_buffer import activity_log
-from .services.gtfs_service import feed_manager
+from .services import gtfs_service
 
 # Configure logging
 logging.basicConfig(
@@ -31,13 +31,47 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize application services on startup."""
+    """Initialize application services on startup.
+
+    HTTP mode never runs the FastMCP lifespan in gtfs_mcp/__init__.py, so the
+    feed manager must be booted here - otherwise every tool/endpoint reports
+    "Feed manager not initialized". Init runs as a background task: on a cold
+    depot the default Vienna feed download takes minutes and must not block
+    /health readiness. Progress is visible via GET /v1/jobs.
+    """
     logger.info("Starting GTFS MCP server...")
     logger.info(f"Data directory: {settings.data_dir}")
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     activity_log.info("server", "Server started")
+
+    async def _boot_feeds() -> None:
+        # Module-attribute lookup (not `from ... import feed_manager`): the
+        # name is rebound by initialize_gtfs_service, a stale import stays None.
+        if gtfs_service.feed_manager is not None:
+            return
+        try:
+            from .services.gtfs_service import initialize_gtfs_service
+
+            await initialize_gtfs_service(settings.data_dir)
+            logger.info("Feed manager online")
+        except Exception as e:
+            logger.error("Feed manager init failed (server stays up, depot degraded): %s", e)
+
+    # Test/CI escape hatch: GTFS_MCP_SKIP_FEED_BOOT=1 keeps the old degraded
+    # mode (no manager, no background Vienna download) so TestClient suites
+    # stay fast and deterministic. Production (start.ps1) never sets it.
+    skip_boot = os.getenv("GTFS_MCP_SKIP_FEED_BOOT", "").strip().lower() in {"1", "true", "yes"}
+    boot_task = None if skip_boot else asyncio.create_task(_boot_feeds())
     yield
+    if boot_task is not None:
+        boot_task.cancel()
     activity_log.info("server", "Server stopped")
+    try:
+        from .services.gtfs_service import cleanup_gtfs_service
+
+        await cleanup_gtfs_service()
+    except Exception as e:
+        logger.warning("Feed manager cleanup failed: %s", e)
     logger.info("GTFS MCP server stopped")
 
 
@@ -87,7 +121,7 @@ async def health_check():
         "version": "0.1.0",
         "uptime_seconds": int(time.time() - _started_at),
         "tool_count": await _tool_count(),
-        "providers": {"feed_manager": feed_manager is not None},
+        "providers": {"feed_manager": gtfs_service.feed_manager is not None},
     }
 
 
@@ -101,7 +135,7 @@ async def status_check():
         "version": "0.1.0",
         "uptime_seconds": int(time.time() - _started_at),
         "tool_count": await _tool_count(),
-        "feed_manager": feed_manager is not None,
+        "feed_manager": gtfs_service.feed_manager is not None,
     }
 
 
@@ -135,6 +169,7 @@ async def skills():
 @app.post("/api/shutdown")
 async def shutdown():
     """Graceful self-termination (fleet standard: *_shutdown endpoint)."""
+
     async def _stop() -> None:
         await asyncio.sleep(0.5)
         logger.info("Shutdown requested via /api/shutdown")
