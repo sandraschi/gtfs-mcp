@@ -2,6 +2,58 @@
 
 All notable changes to gtfs-mcp are documented here.
 
+## [0.1.2] - 2026-09-24 (assfix re-run)
+
+Re-audit against a large uncommitted batch of new work (multi-city presets,
+new webapp pages, LLM proxy changes) that had never been run through the
+checklist — score dropped to 10/100 (RUNT) before this pass.
+
+### Fixed
+- **Ruff ignore-list footgun removed** — `S110`/`S112` (bare `except: pass`/
+  `continue`) had been added to `[tool.ruff.lint] ignore` (each duplicated).
+  Removed both; the 2 real `except: pass` blocks it uncovered in
+  `api/llm.py` now log via `logger.exception(...)` instead of swallowing.
+- **`T20` (print-statement ban) added to `select`** — was missing entirely.
+- **`chat_once` redeclaration bug** — `api/llm.py` defined the same
+  `@router.post("/chat")` handler twice, byte-for-byte identical; pyright
+  flagged the shadowing. Removed the duplicate.
+- **9 pyright errors fixed**: `api/llm.py` (redeclaration above + an
+  `object`-not-awaitable false positive from `callable()` narrowing, fixed
+  with an explicit `cast(Any, fn)`), `core/feed_manager.py` (`sum()` over a
+  `Generator[str | int, ...]` — wrapped each term in `int(...)`),
+  `core/gtfs_parser.py` (a possibly-`None` dict key passed to `setdefault`,
+  and a possibly-`None` `time` passed to `datetime.combine` — both now
+  checked before use).
+- **`justfile` `build-native` recipe added** (`native/build.ps1`). The other
+  four recipes the assessment flagged as missing (`mcpb-pack`,
+  `cua-nsis-test`, `cua-webapp-test`, `e2e`) turned out to already exist via
+  the imported `scripts/just/fleet.just` — re-verified with `just --list`.
+- **Pre-commit hook installed** — `.pre-commit-config.yaml` existed but
+  `.git/hooks/pre-commit` did not; every prior commit bypassed lint/format.
+- **`docs/TROUBLESHOOTING.md` added** — was missing despite
+  `CONFIGURATION.md`/`DEVELOPMENT.md` existing.
+- **Stale tool docs synced** — README/`llms-full.txt`/`glama.json` said 7
+  tools; the server has 14. Added `get_stop_routes`, `list_routes`,
+  `list_presets`, `remove_feed`, `depot_stats`, `export_feed`, `web_search`.
+- **Dialogic return shape** — failure-path returns in `services/gtfs_service.py`
+  (27 sites), `api/llm.py` (5 sites), and `core/feed_manager.py` (3 sites)
+  used `"error"` with no `"message"` key. Added `"message"` mirroring
+  `"error"`'s content (kept `"error"` too — the webapp's `chat.tsx`/
+  `feeds.tsx` read it directly) so both the dialogic standard and existing
+  consumers are satisfied.
+
+### Deferred (documented, not fixed this pass)
+- `@mcp.resource()`/`@mcp.prompt()` — none exist yet.
+- `prefab-ui` dependency declared but unused.
+- No Zustand store (page-local `useState` instead); no `bun.lock` (npm used).
+- Webapp font/contrast (`text-xs` ×51, `text-slate-400/500` ×13 files) and
+  thin `data-testid` coverage on 3 pages (`Logging.tsx`, `help.tsx`,
+  `tools.tsx`) — lower priority per the assessment, not reached this pass.
+- Playwright e2e specs exist but don't run in CI.
+
+### Gates (all pass)
+ruff 0 · pyright 0 · pytest 20/20 (cov 48%) · tsc 0 · biome clean
+
 ## [0.1.1] - 2026-08-07 (assfix re-run)
 
 ### Fixed
