@@ -42,6 +42,10 @@ class GTFSFeedManager:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
+        # Parse-job tracker: feed_id -> {status, stage, progress, message, updated_at}
+        # Powers the "ongoing parsing" display on the Sources/Depot pages.
+        self._jobs: dict[str, dict] = {}
+
         self._persistence: GTFSPersistence | None = GTFSPersistence(self.data_dir / "gtfs_mcp.db") if persist else None
 
     async def _ensure_persistence(self) -> GTFSPersistence | None:
@@ -49,6 +53,25 @@ class GTFSFeedManager:
             await self._persistence.init()
             self._persistence._initialized = True
         return self._persistence
+
+    def _set_job(self, feed_id: str, status: str, stage: str, progress: float, message: str = "") -> None:
+        """Record a parse-job state transition (UI polls this)."""
+        self._jobs[feed_id] = {
+            "feed_id": feed_id,
+            "status": status,  # running | done | failed
+            "stage": stage,  # queued | downloading | extracting | parsing | persisting | done | failed
+            "progress": max(0.0, min(1.0, progress)),
+            "message": message,
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+
+    def get_job(self, feed_id: str) -> dict | None:
+        """Return the tracked job for a feed, or None if never started."""
+        return self._jobs.get(feed_id)
+
+    def list_jobs(self) -> list[dict]:
+        """Return all tracked parse jobs (newest first)."""
+        return sorted(self._jobs.values(), key=lambda j: j.get("updated_at", ""), reverse=True)
 
     def _table_rows(self, feed: GTFSFeed) -> dict[str, list[dict]]:
         return {
@@ -140,14 +163,17 @@ class GTFSFeedManager:
         # Fresh in memory and not expired - reuse it.
         in_memory = self.feeds.get(feed_id)
         if not force_update and in_memory and not self._needs_update(feed_id, update_interval):
+            self._set_job(feed_id, "done", "done", 1.0, "Already up to date (memory cache)")
             return in_memory
 
         # Not forced: try the SQLite cache before hitting the network.
         if not force_update:
+            self._set_job(feed_id, "running", "queued", 0.05, "Checking local depot cache")
             cached = await self._load_from_db(feed_id, url)
             if cached is not None:
                 self.feeds[feed_id] = cached
                 self.update_intervals[feed_id] = update_interval
+                self._set_job(feed_id, "done", "done", 1.0, "Restored from local depot (no download)")
                 return cached
 
         # Check if we need to update the feed
@@ -155,24 +181,48 @@ class GTFSFeedManager:
 
         if needs_update:
             try:
+                self._set_job(feed_id, "running", "downloading", 0.1, f"Downloading {url}")
                 await self._download_feed(feed_id, url, feed_dir)
                 self.last_updated[feed_id] = datetime.utcnow()
                 self.update_intervals[feed_id] = update_interval
             except Exception as e:
                 logger.error(f"Failed to update feed {feed_id}: {e!s}")
+                self._set_job(feed_id, "failed", "failed", 1.0, str(e))
                 if not feed_dir.exists() or not any(feed_dir.iterdir()):
                     raise GTFSValidationError(f"No valid feed data available for {feed_id}") from e
                 # Continue with existing data if available
 
-        # Load the feed
+        # Load the feed. Parsing is pure-Python CSV work over files up to
+        # ~700 MB (Vienna stop_times) - off the event loop so /health and
+        # /v1/jobs stay responsive while a feed parses.
+        self._set_job(feed_id, "running", "parsing", 0.6, "Parsing GTFS tables")
         feed = GTFSFeed(feed_dir)
+
+        def _on_parse(frac: float, done: int, total: int) -> None:
+            self._set_job(
+                feed_id,
+                "running",
+                "parsing",
+                0.6 + 0.25 * frac,
+                f"Parsing stop_times: {done:,} / {total:,} rows",
+            )
+
         try:
-            feed.load()
+            await asyncio.to_thread(feed.load, _on_parse)
             self.feeds[feed_id] = feed
+            self._set_job(feed_id, "running", "persisting", 0.85, "Saving to depot")
             await self._persist_feed(feed_id, url, feed)
+            self._set_job(
+                feed_id,
+                "done",
+                "done",
+                1.0,
+                f"Loaded {len(feed.stops)} stops, {len(feed.routes)} routes, {len(feed.trips)} trips",
+            )
             return feed
         except Exception as e:
             logger.error(f"Failed to load feed {feed_id}: {e!s}")
+            self._set_job(feed_id, "failed", "failed", 1.0, str(e))
             raise GTFSValidationError(f"Invalid GTFS data in {feed_id}") from e
 
     def get_feed(self, feed_id: str) -> GTFSFeed | None:
@@ -194,6 +244,7 @@ class GTFSFeedManager:
         """
         result = []
         for feed_id, feed in self.feeds.items():
+            job = self._jobs.get(feed_id)
             result.append(
                 {
                     "id": feed_id,
@@ -203,9 +254,148 @@ class GTFSFeedManager:
                     "trips": len(feed.trips) if feed.loaded else 0,
                     "stop_times": len(feed.stop_times) if feed.loaded else 0,
                     "status": "loaded",
+                    "job_status": job.get("status") if job else None,
+                    "job_stage": job.get("stage") if job else None,
+                    "job_progress": job.get("progress") if job else None,
                 }
             )
         return result
+
+    async def remove_feed(self, feed_id: str) -> bool:
+        """Delete a feed from memory, SQLite depot, and the data dir.
+
+        Returns True if anything was removed, False if the id was unknown.
+        """
+        found = feed_id in self.feeds or feed_id in self.last_updated
+        self.feeds.pop(feed_id, None)
+        self.last_updated.pop(feed_id, None)
+        self.update_intervals.pop(feed_id, None)
+        self._jobs.pop(feed_id, None)
+        store = await self._ensure_persistence()
+        if store is not None:
+            try:
+                await store.delete_feed(feed_id)
+                found = True
+            except Exception as e:
+                logger.warning("Could not delete feed %s from SQLite: %s", feed_id, e)
+        feed_dir = self.data_dir / feed_id
+        if feed_dir.exists():
+            try:
+                await asyncio.to_thread(shutil.rmtree, feed_dir)
+                found = True
+            except Exception as e:
+                logger.warning("Could not remove feed dir %s: %s", feed_dir, e)
+        return found
+
+    async def depot_stats(self) -> dict:
+        """Aggregate depot stats for the dashboard/depot pages."""
+        feeds = self.list_feeds()
+        store = await self._ensure_persistence()
+        snapshots: list[dict] = []
+        if store is not None:
+            try:
+                snapshots = await store.list_snapshots()
+            except Exception as e:
+                logger.warning("Could not list snapshots: %s", e)
+        by_id = {s["feed_id"]: s for s in snapshots}
+        total_stops = sum(int(f.get("stops", 0) or 0) for f in feeds)
+        total_trips = sum(int(f.get("trips", 0) or 0) for f in feeds)
+        total_stop_times = sum(int(f.get("stop_times", 0) or 0) for f in feeds)
+        return {
+            "feed_count": len(feeds),
+            "total_stops": total_stops,
+            "total_trips": total_trips,
+            "total_stop_times": total_stop_times,
+            "feeds": feeds,
+            "snapshots": snapshots,
+            "snapshot_ids": sorted(by_id.keys()),
+            "jobs": self.list_jobs(),
+        }
+
+    @staticmethod
+    def _safe_dir_name(feed_id: str) -> str:
+        """Filesystem-safe per-city directory name for a feed id."""
+        safe = "".join(c if (c.isalnum() or c in ("-", "_")) else "_" for c in feed_id).strip("_")
+        return safe or "feed"
+
+    @staticmethod
+    def _refresh_city_index(cities_root: Path, feed_id: str, manifest: dict) -> None:
+        """Maintain cities/index.json listing every exported per-city feed."""
+        import json
+
+        index_path = cities_root / "index.json"
+        try:
+            index = json.loads(index_path.read_text(encoding="utf-8")) if index_path.exists() else {}
+        except Exception:
+            index = {}
+        index[feed_id] = {
+            "exported_at": manifest["exported_at"],
+            "path": manifest["dest"],
+            "files": manifest["files"],
+            "counts": manifest["counts"],
+        }
+        index_path.write_text(json.dumps(index, indent=2), encoding="utf-8")
+
+    def export_to_mywienerlinien(self, feed_id: str) -> dict:
+        """Copy a parsed feed's CSV tables into a per-city dir in the mywienerlinien tree.
+
+        Each feed gets its own folder
+        ``mywienerlinien/scripts/gtfs_data/cities/<feed_id>/`` (+ manifest.json),
+        so exporting Munich never clobbers Vienna's ``extracted/`` files.
+        mywienerlinien's live reader still points at ``extracted/`` (Vienna) -
+        per-city data switching over there is a separate change; ``cities/``
+        carries an index.json listing everything available for it.
+        """
+        feed = self.feeds.get(feed_id)
+        if feed is None:
+            return {
+                "success": False,
+                "message": f"Feed not found: {feed_id}",
+                "error": f"Feed not found: {feed_id}",
+            }
+        safe_id = self._safe_dir_name(feed_id)
+        src_dir = self.data_dir / feed_id
+        if not src_dir.exists():
+            return {
+                "success": False,
+                "message": f"Feed directory missing: {src_dir}",
+                "error": f"Feed directory missing: {src_dir}",
+            }
+        cities_root = Path("D:/Dev/repos/mywienerlinien/scripts/gtfs_data/cities")
+        dest_root = cities_root / safe_id
+        try:
+            dest_root.mkdir(parents=True, exist_ok=True)
+            import json
+
+            copied: list[str] = []
+            for item in sorted(src_dir.glob("*.txt")):
+                shutil.copy2(item, dest_root / item.name)
+                copied.append(item.name)
+            manifest = {
+                "feed_id": feed_id,
+                "exported_at": datetime.utcnow().isoformat(),
+                "source": "gtfs-mcp depot",
+                "dest": str(dest_root),
+                "files": copied,
+                "counts": {
+                    "stops": len(feed.stops),
+                    "routes": len(feed.routes),
+                    "trips": len(feed.trips),
+                    "stop_times": len(feed.stop_times),
+                },
+            }
+            (dest_root / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+            self._refresh_city_index(cities_root, safe_id, manifest)
+            return {
+                "success": True,
+                "message": f"Exported {len(copied)} file(s) to mywienerlinien cities/{safe_id}",
+                "dest": str(dest_root),
+                "files": copied,
+                "counts": manifest["counts"],
+            }
+        except Exception as e:
+            logger.exception("export_to_mywienerlinien failed for %s", feed_id)
+            return {"success": False, "message": str(e), "error": str(e)}
 
     def _needs_update(self, feed_id: str, update_interval: int) -> bool:
         """Check if a feed needs to be updated.
@@ -257,8 +447,14 @@ class GTFSFeedManager:
             extract_path.mkdir()
 
             try:
-                with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                    zip_ref.extractall(extract_path)
+
+                def _extract() -> None:
+                    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                        zip_ref.extractall(extract_path)
+
+                # Unzipping ~800 MB of CSVs synchronously would starve the
+                # event loop for minutes - same reason as feed.load() below.
+                await asyncio.to_thread(_extract)
             except (zipfile.BadZipFile, OSError) as e:
                 raise GTFSValidationError(f"Invalid ZIP file: {e!s}") from e
 

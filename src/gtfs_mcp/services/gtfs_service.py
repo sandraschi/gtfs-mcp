@@ -76,10 +76,18 @@ async def add_feed(
 
     try:
         if feed_manager is None:
-            return {"success": False, "error": "Feed manager not initialized"}
+            return {
+                "success": False,
+                "message": "Feed manager not initialized",
+                "error": "Feed manager not initialized",
+            }
 
         if not feed_id or not url:
-            return {"success": False, "error": "feed_id and url are required"}
+            return {
+                "success": False,
+                "message": "feed_id and url are required",
+                "error": "feed_id and url are required",
+            }
 
         await feed_manager.add_feed(
             feed_id=feed_id, url=url, update_interval=update_interval, force_update=force_update
@@ -88,10 +96,10 @@ async def add_feed(
         return {"success": True, "message": f"Successfully added/updated feed: {feed_id}"}
 
     except GTFSValidationError as e:
-        return {"success": False, "error": f"Invalid GTFS data: {e!s}"}
+        return {"success": False, "message": f"Invalid GTFS data: {e!s}", "error": f"Invalid GTFS data: {e!s}"}
     except Exception as e:
         logger.exception("add_feed failed for %s", feed_id)
-        return {"success": False, "error": f"Failed to add feed: {e!s}"}
+        return {"success": False, "message": f"Failed to add feed: {e!s}", "error": f"Failed to add feed: {e!s}"}
 
 
 @mcp.tool(annotations=_READ_ONLY)
@@ -109,7 +117,12 @@ async def list_feeds() -> dict:
     global feed_manager
 
     if feed_manager is None:
-        return {"success": False, "error": "Feed manager not initialized", "feeds": []}
+        return {
+            "success": False,
+            "message": "Feed manager not initialized",
+            "error": "Feed manager not initialized",
+            "feeds": [],
+        }
 
     feeds = feed_manager.list_feeds()
     return {"success": True, "message": f"{len(feeds)} feed(s) registered", "feeds": feeds}
@@ -138,11 +151,21 @@ async def get_departures(
     global feed_manager
 
     if feed_manager is None:
-        return {"success": False, "error": "Feed manager not initialized", "departures": []}
+        return {
+            "success": False,
+            "message": "Feed manager not initialized",
+            "error": "Feed manager not initialized",
+            "departures": [],
+        }
 
     feed = feed_manager.get_feed(feed_id)
     if not feed:
-        return {"success": False, "error": f"Feed not found: {feed_id}", "departures": []}
+        return {
+            "success": False,
+            "message": f"Feed not found: {feed_id}",
+            "error": f"Feed not found: {feed_id}",
+            "departures": [],
+        }
 
     try:
         departures = feed.get_stop_times(stop_id=stop_id, route_id=route_id, limit=limit)
@@ -163,7 +186,12 @@ async def get_departures(
         return {"success": True, "message": f"{len(result)} departure(s) found", "departures": result}
     except Exception as e:
         logger.exception("get_departures failed for %s/%s", feed_id, stop_id)
-        return {"success": False, "error": f"Failed to get departures: {e!s}", "departures": []}
+        return {
+            "success": False,
+            "message": f"Failed to get departures: {e!s}",
+            "error": f"Failed to get departures: {e!s}",
+            "departures": [],
+        }
 
 
 @mcp.tool(annotations=_READ_ONLY)
@@ -185,11 +213,21 @@ async def get_stop_info(
     global feed_manager
 
     if feed_manager is None:
-        return {"success": False, "error": "Feed manager not initialized", "stop": None}
+        return {
+            "success": False,
+            "message": "Feed manager not initialized",
+            "error": "Feed manager not initialized",
+            "stop": None,
+        }
 
     feed = feed_manager.get_feed(feed_id)
     if not feed:
-        return {"success": False, "error": f"Feed not found: {feed_id}", "stop": None}
+        return {
+            "success": False,
+            "message": f"Feed not found: {feed_id}",
+            "error": f"Feed not found: {feed_id}",
+            "stop": None,
+        }
 
     try:
         if not feed.loaded:
@@ -197,12 +235,22 @@ async def get_stop_info(
 
         stop = next((s for s in feed.stops if s["stop_id"] == stop_id), None)
         if not stop:
-            return {"success": False, "error": f"Stop not found: {stop_id}", "stop": None}
+            return {
+                "success": False,
+                "message": f"Stop not found: {stop_id}",
+                "error": f"Stop not found: {stop_id}",
+                "stop": None,
+            }
 
         return {"success": True, "message": f"Stop {stop_id} retrieved", "stop": dict(stop)}
     except Exception as e:
         logger.exception("get_stop_info failed for %s/%s", feed_id, stop_id)
-        return {"success": False, "error": f"Failed to get stop info: {e!s}", "stop": None}
+        return {
+            "success": False,
+            "message": f"Failed to get stop info: {e!s}",
+            "error": f"Failed to get stop info: {e!s}",
+            "stop": None,
+        }
 
 
 @mcp.tool(annotations=_READ_ONLY)
@@ -227,11 +275,21 @@ async def find_stops(
     global feed_manager
 
     if feed_manager is None:
-        return {"success": False, "error": "Feed manager not initialized", "stops": []}
+        return {
+            "success": False,
+            "message": "Feed manager not initialized",
+            "error": "Feed manager not initialized",
+            "stops": [],
+        }
 
     feed = feed_manager.get_feed(feed_id)
     if not feed:
-        return {"success": False, "error": f"Feed not found: {feed_id}", "stops": []}
+        return {
+            "success": False,
+            "message": f"Feed not found: {feed_id}",
+            "error": f"Feed not found: {feed_id}",
+            "stops": [],
+        }
 
     try:
         if not feed.loaded:
@@ -242,9 +300,9 @@ async def find_stops(
 
         for stop in feed.stops:
             if (
-                q in stop.get("stop_name", "").lower()
-                or q in stop.get("stop_id", "").lower()
-                or q in stop.get("stop_code", "").lower()
+                q in (stop.get("stop_name") or "").lower()
+                or q in (stop.get("stop_id") or "").lower()
+                or q in (stop.get("stop_code") or "").lower()
             ):
                 matches.append(
                     {
@@ -264,7 +322,161 @@ async def find_stops(
         return {"success": True, "message": f"{len(matches)} stop(s) matched", "stops": matches}
     except Exception as e:
         logger.exception("find_stops failed for %s", feed_id)
-        return {"success": False, "error": f"Failed to find stops: {e!s}", "stops": []}
+        return {
+            "success": False,
+            "message": f"Failed to find stops: {e!s}",
+            "error": f"Failed to find stops: {e!s}",
+            "stops": [],
+        }
+
+
+@mcp.tool(annotations=_READ_ONLY)
+async def get_stop_routes(
+    feed_id: Annotated[str, Field(description="ID of the GTFS feed (see list_feeds)")],
+    stop_id: Annotated[str, Field(description="Stop ID to list serving lines for")],
+) -> dict:
+    """List the transit lines (routes) serving a stop - powers the line badges in search results.
+
+    ## Return Format
+    {"success": bool, "message": str, "routes": [{"route_id", "route_short_name",
+      "route_long_name", "route_type"}], "error": str | None}
+
+    ## Examples
+    get_stop_routes(feed_id="default", stop_id="at:49:1040:0:1")
+
+    Notes - first call builds the stop->routes index (~10-20s on Vienna, then cached).
+    Run in a thread so the event loop stays responsive during the build.
+    """
+    global feed_manager
+
+    if feed_manager is None:
+        return {
+            "success": False,
+            "message": "Feed manager not initialized",
+            "error": "Feed manager not initialized",
+            "routes": [],
+        }
+
+    feed = feed_manager.get_feed(feed_id)
+    if not feed:
+        return {
+            "success": False,
+            "message": f"Feed not found: {feed_id}",
+            "error": f"Feed not found: {feed_id}",
+            "routes": [],
+        }
+
+    try:
+        import asyncio
+
+        routes = await asyncio.to_thread(feed.get_routes_for_stop, stop_id)
+        return {"success": True, "message": f"{len(routes)} route(s) serve {stop_id}", "routes": routes}
+    except Exception as e:
+        logger.exception("get_stop_routes failed for %s", feed_id)
+        return {
+            "success": False,
+            "message": f"Failed to list stop routes: {e!s}",
+            "error": f"Failed to list stop routes: {e!s}",
+            "routes": [],
+        }
+
+
+@mcp.tool(annotations=_READ_ONLY)
+async def list_routes(
+    feed_id: Annotated[str, Field(description="ID of the GTFS feed (see list_feeds)")],
+) -> dict:
+    """List all transit lines (routes) of a feed with names, types, and colors.
+
+    ## Return Format
+    {"success": bool, "message": str, "routes": [{"route_id", "route_short_name",
+      "route_long_name", "route_type", "route_color", "route_text_color",
+      "agency_id"}], "error": str | None}
+
+    ## Examples
+    list_routes(feed_id="default")
+
+    Notes - route_type follows the GTFS standard (0 tram, 1 metro, 2 rail,
+    3 bus, 4 ferry, ...). route_color is hex without '#' when the agency
+    provides one. Powers the Lines page with its vehicle-type filter.
+    """
+    global feed_manager
+
+    if feed_manager is None:
+        return {
+            "success": False,
+            "message": "Feed manager not initialized",
+            "error": "Feed manager not initialized",
+            "routes": [],
+        }
+
+    feed = feed_manager.get_feed(feed_id)
+    if not feed:
+        return {
+            "success": False,
+            "message": f"Feed not found: {feed_id}",
+            "error": f"Feed not found: {feed_id}",
+            "routes": [],
+        }
+
+    try:
+        if not feed.loaded:
+            feed.load()
+
+        routes = [
+            {
+                "route_id": r.get("route_id"),
+                "route_short_name": r.get("route_short_name"),
+                "route_long_name": r.get("route_long_name"),
+                "route_type": r.get("route_type"),
+                "route_color": r.get("route_color"),
+                "route_text_color": r.get("route_text_color"),
+                "agency_id": r.get("agency_id"),
+            }
+            for r in feed.routes
+        ]
+        return {"success": True, "message": f"{len(routes)} route(s) in {feed_id}", "routes": routes}
+    except Exception as e:
+        logger.exception("list_routes failed for %s", feed_id)
+        return {
+            "success": False,
+            "message": f"Failed to list routes: {e!s}",
+            "error": f"Failed to list routes: {e!s}",
+            "routes": [],
+        }
+
+
+@mcp.tool(annotations=_READ_ONLY)
+async def web_search(
+    query: Annotated[str, Field(description="Web search query (news, background, comparisons)")],
+    max_results: Annotated[int, Field(description="Max results (1-10)", ge=1, le=10)] = 8,
+) -> dict:
+    """Search the public web (DuckDuckGo, no API key) for non-schedule questions.
+
+    ## Return Format
+    {"success": bool, "message": str, "results": [{"title", "snippet", "url"}], "error": str | None}
+
+    ## Examples
+    web_search(query="Gemini TTS models September 2026")
+    web_search(query="Wiener Linien night service U-Bahn", max_results=5)
+
+    Notes - for transit schedules prefer find_stops/get_departures (live depot).
+    Use this for news, reviews, comparisons, and anything outside the depot.
+    Returns success=True with an empty list (never an error) when the search fails.
+    """
+    from .web_search import web_search as _search
+
+    try:
+        found = await _search(query, max_results)
+        results = found.get("results", [])
+        return {"success": True, "message": f"{len(results)} web result(s)", "results": results}
+    except Exception as e:
+        logger.exception("web_search tool failed")
+        return {
+            "success": False,
+            "message": f"Web search failed: {e!s}",
+            "error": f"Web search failed: {e!s}",
+            "results": [],
+        }
 
 
 @mcp.tool(annotations=_READ_ONLY)
@@ -288,6 +500,101 @@ async def status() -> dict:
         "feed_count": len(feeds),
         "feeds": feeds,
     }
+
+
+@mcp.tool(annotations=_READ_ONLY)
+async def list_presets() -> dict:
+    """List curated GTFS feed presets (Vienna, Munich, London, ...).
+
+    ## Return Format
+    {"success": bool, "message": str, "presets": [{"id", "city", "country", "agency", "url", "verified", ...}]}
+
+    ## Examples
+    list_presets()
+
+    Notes - Vienna is verified; other URLs are best-effort community links (see notes field).
+    Use add_feed with a preset URL, or POST /v1/feeds/from-preset in the webapp.
+    """
+    from ..core.presets import list_presets as _list
+
+    presets = _list()
+    return {"success": True, "message": f"{len(presets)} preset(s) available", "presets": presets}
+
+
+@mcp.tool(annotations={"destructive": True})
+async def remove_feed(
+    feed_id: Annotated[str, Field(description="ID of the feed to delete from the depot")],
+) -> dict:
+    """Delete a feed from the depot (memory + SQLite + data dir).
+
+    ## Return Format
+    {"success": bool, "message": str, "error": str | None}
+
+    ## Examples
+    remove_feed(feed_id="munich")
+    """
+    global feed_manager
+
+    if feed_manager is None:
+        return {"success": False, "message": "Feed manager not initialized", "error": "Feed manager not initialized"}
+    removed = await feed_manager.remove_feed(feed_id)
+    if not removed:
+        return {"success": False, "message": f"Feed not found: {feed_id}", "error": f"Feed not found: {feed_id}"}
+    return {"success": True, "message": f"Feed {feed_id} deleted"}
+
+
+@mcp.tool(annotations=_READ_ONLY)
+async def depot_stats() -> dict:
+    """Aggregate depot stats: feed counts, totals, parse jobs.
+
+    ## Return Format
+    {"success": bool, "feed_count": int, "total_stops": int, "total_trips": int,
+     "total_stop_times": int, "feeds": [...], "jobs": [...]}
+
+    ## Examples
+    depot_stats()
+    """
+    global feed_manager
+
+    if feed_manager is None:
+        return {"success": False, "message": "Feed manager not initialized", "error": "Feed manager not initialized"}
+    stats = await feed_manager.depot_stats()
+    return {"success": True, "message": f"{stats['feed_count']} feed(s) in depot", **stats}
+
+
+@mcp.tool(annotations=_MUTATING)
+async def export_feed(
+    feed_id: Annotated[str, Field(description="ID of the depot feed to export")],
+    target: Annotated[str, Field(description="Export target (currently only 'mywienerlinien')")] = "mywienerlinien",
+) -> dict:
+    """Export a depot feed to the mywienerlinien city app.
+
+    Copies the feed's CSV tables into a per-city folder
+    mywienerlinien/scripts/gtfs_data/cities/<feed_id>/ + manifest.json
+    (plus cities/index.json) so Vienna tooling and other cities never
+    clobber each other's files.
+
+    ## Return Format
+    {"success": bool, "message": str, "dest": str | None, "files": [...], "error": str | None}
+
+    ## Examples
+    export_feed(feed_id="default")
+    export_feed(feed_id="vienna", target="mywienerlinien")
+    """
+    global feed_manager
+
+    if feed_manager is None:
+        return {"success": False, "message": "Feed manager not initialized", "error": "Feed manager not initialized"}
+    if target != "mywienerlinien":
+        return {
+            "success": False,
+            "message": f"Unknown export target: {target}",
+            "error": f"Unknown export target: {target}",
+        }
+    import asyncio as _asyncio
+
+    result = await _asyncio.to_thread(feed_manager.export_to_mywienerlinien, feed_id)
+    return result
 
 
 @mcp.tool(annotations={"destructive": True})
@@ -331,6 +638,9 @@ async def initialize_gtfs_service(data_dir: Path) -> None:
         from ..config import get_settings
 
         default_url = get_settings().default_feed_url
+        # Skip when already restored from SQLite by load_all_from_db above:
+        # without this every boot re-materializes the 8M-row Vienna feed a
+        # second time for no benefit (refresh is a depot-UI action).
         if default_url and "default" not in feed_manager.feeds:
             try:
                 await feed_manager.add_feed("default", str(default_url))
