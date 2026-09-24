@@ -5,11 +5,10 @@
     BackendPort  = 10913
     FrontendPort = 10912
     HealthPath   = '/health'
-    WebRoot      = 'D:\Dev\repos\gtfs-mcp\web_sota'
+    WebRoot      = 'web_sota'
     Backend = @{
         Kind          = 'uvicorn'
-        UvicornTarget = 'gtfs_mcp.main:app'
-        SyncExtras    = @('dev')
+        UvicornTarget = 'gtfs_mcp.server:app'
         Env           = @{ WEB_PORT = '10913' }
     }
     Frontend = @{
