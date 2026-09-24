@@ -4,9 +4,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Database,
+  Globe,
   HelpCircle,
   LayoutDashboard,
   MapPin,
+  Route,
   ScrollText,
   Server,
   Settings,
@@ -25,8 +27,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   const navItems = [
     { href: "/", label: "Overview", icon: LayoutDashboard },
+    { href: "/sources", label: "Sources", icon: Globe },
     { href: "/feeds", label: "Feeds", icon: Database },
     { href: "/stops", label: "Stops", icon: MapPin },
+    { href: "/lines", label: "Lines", icon: Route },
     { href: "/chat", label: "Chat", icon: Bot },
     { href: "/tools", label: "Tools", icon: Wrench },
     { href: "/skills", label: "Skills", icon: BookOpen },
