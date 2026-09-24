@@ -4,6 +4,11 @@
 
 @layer base {
   :root {
+    /* Dark app: tells the browser to draw NATIVE controls (select popups,
+       option lists, scrollbars) in dark mode. Without this, opened
+       <select> dropdowns render light-mode OS defaults against our dark
+       classes = black-on-black / white-on-white unreadable text. */
+    color-scheme: dark;
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 

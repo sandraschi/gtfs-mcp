@@ -7,10 +7,77 @@ interface Stop {
   stop_id: string;
   stop_name: string;
   stop_code?: string | null;
-  stop_lat?: number | null;
-  stop_lon?: number | null;
+  // Backend coerces these to numbers, but old depots / surprises happen -
+  // the renderer below must never assume (see formatCoord).
+  stop_lat?: number | string | null;
+  stop_lon?: number | string | null;
   zone_id?: string | null;
-  location_type?: number | null;
+  location_type?: number | string | null;
+}
+
+/** Crash-proof coordinate formatting: CSV strings, numbers, nulls all OK. */
+function formatCoord(v: number | string | null | undefined): string {
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n.toFixed(4) : "?";
+}
+
+interface StopLine {
+  route_id: string;
+  route_short_name?: string | null;
+  route_long_name?: string | null;
+  route_type?: number | string | null;
+}
+
+function lineClass(t: number | string | null | undefined): string {
+  switch (Number(t)) {
+    case 1:
+      return "border-blue-500/30 bg-blue-500/15 text-blue-300"; // U-Bahn / metro
+    case 0:
+      return "border-red-500/30 bg-red-500/15 text-red-300"; // tram
+    case 3:
+      return "border-emerald-500/30 bg-emerald-500/15 text-emerald-300"; // bus
+    case 2:
+      return "border-sky-500/30 bg-sky-500/15 text-sky-300"; // rail
+    default:
+      return "border-slate-600/40 bg-slate-700/40 text-slate-300";
+  }
+}
+
+function StopLines({
+  lines,
+  pending,
+}: {
+  lines?: StopLine[];
+  pending: boolean;
+}) {
+  if (pending)
+    return (
+      <span className="mt-1 block text-xs text-slate-500">loading lines…</span>
+    );
+  if (!lines || lines.length === 0) return null;
+  // Wiener Linien mints one route_id per timetable variant (U1 x9) - badges
+  // show each line once.
+  const seen = new Set<string>();
+  const uniq = lines.filter((l) => {
+    const k = `${l.route_type}|${l.route_short_name || l.route_id}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  if (uniq.length === 0) return null;
+  return (
+    <span className="mt-1 flex flex-wrap gap-1">
+      {uniq.map((l) => (
+        <span
+          key={l.route_id}
+          title={l.route_long_name || l.route_id}
+          className={`rounded border px-1.5 py-px text-xs font-semibold ${lineClass(l.route_type)}`}
+        >
+          {l.route_short_name || l.route_id}
+        </span>
+      ))}
+    </span>
+  );
 }
 
 interface Departure {
@@ -29,6 +96,9 @@ export function Stops() {
   const [feedId, setFeedId] = useState("");
   const [query, setQuery] = useState("");
   const [stops, setStops] = useState<Stop[]>([]);
+  const [linesByStop, setLinesByStop] = useState<Record<string, StopLine[]>>(
+    {},
+  );
   const [selected, setSelected] = useState<Stop | null>(null);
   const [departures, setDepartures] = useState<Departure[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,6 +120,24 @@ export function Stops() {
     url: string;
   }
 
+  const fetchLines = useCallback(async (fid: string, ids: string[]) => {
+    setLinesByStop({});
+    await Promise.all(
+      ids.map(async (id) => {
+        try {
+          const r = await fetch(
+            `${API_BASE}/v1/stops/${encodeURIComponent(id)}/routes?feed_id=${encodeURIComponent(fid)}`,
+          );
+          if (!r.ok) return;
+          const d = (await r.json()) as { routes?: StopLine[] };
+          setLinesByStop((prev) => ({ ...prev, [id]: d.routes ?? [] }));
+        } catch {
+          /* badges stay empty for this stop */
+        }
+      }),
+    );
+  }, []);
+
   const search = useCallback(async () => {
     if (!feedId || !query.trim()) return;
     setLoading(true);
@@ -61,14 +149,19 @@ export function Stops() {
         `${API_BASE}/v1/stops/search?feed_id=${encodeURIComponent(feedId)}&query=${encodeURIComponent(query.trim())}&limit=20`,
       );
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      setStops((await r.json()) as Stop[]);
+      const results = (await r.json()) as Stop[];
+      setStops(results);
+      void fetchLines(
+        feedId,
+        results.map((s) => s.stop_id),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Search failed");
       setStops([]);
     } finally {
       setLoading(false);
     }
-  }, [feedId, query]);
+  }, [feedId, query, fetchLines]);
 
   const selectStop = async (stop: Stop) => {
     setSelected(stop);
@@ -162,13 +255,17 @@ export function Stops() {
                   }`}
                 >
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
-                  <span>
+                  <span className="min-w-0 flex-1">
                     <span className="block text-slate-200">{s.stop_name}</span>
-                    <span className="block text-xs text-slate-400">
+                    <StopLines
+                      lines={linesByStop[s.stop_id]}
+                      pending={!(s.stop_id in linesByStop)}
+                    />
+                    <span className="block truncate text-xs text-slate-500">
                       {s.stop_id}
                       {s.stop_code ? ` | code ${s.stop_code}` : ""}
                       {s.stop_lat
-                        ? ` | ${s.stop_lat.toFixed(4)}, ${s.stop_lon?.toFixed(4)}`
+                        ? ` | ${formatCoord(s.stop_lat)}, ${formatCoord(s.stop_lon)}`
                         : ""}
                     </span>
                   </span>

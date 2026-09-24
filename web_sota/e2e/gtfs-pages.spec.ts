@@ -9,7 +9,9 @@ test.describe("GTFS Domain Pages", () => {
     await expect(page.locator("[data-testid='hero']")).toContainText(
       "General Transit Feed Specification",
     );
-    await expect(page.locator("[data-testid='hero-stat']").first()).toBeVisible();
+    await expect(
+      page.locator("[data-testid='hero-stat']").first(),
+    ).toBeVisible();
   });
 
   test("Feeds page loads and renders", async ({ page }) => {
@@ -17,6 +19,24 @@ test.describe("GTFS Domain Pages", () => {
     await expect(page.locator("[data-testid='feeds-page']")).toBeVisible();
     await expect(page.locator("[data-testid='feed-id-input']")).toBeVisible();
     await expect(page.locator("[data-testid='feed-add-button']")).toBeVisible();
+  });
+
+  test("Sources page shows curated presets", async ({ page }) => {
+    await page.goto(`${FE}/sources`);
+    await expect(page.locator("[data-testid='sources-page']")).toBeVisible();
+    await expect(
+      page.locator("[data-testid='preset-card-vienna']"),
+    ).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.locator("[data-testid='preset-add-vienna']"),
+    ).toBeVisible();
+  });
+
+  test("Lines page shows filterable line list", async ({ page }) => {
+    await page.goto(`${FE}/lines`);
+    await expect(page.locator("[data-testid='lines-page']")).toBeVisible();
+    await expect(page.locator("[data-testid='line-search']")).toBeVisible();
+    await expect(page.locator("[data-testid='line-filter-1']")).toBeVisible();
   });
 
   test("Tools page shows dynamic tool list", async ({ page }) => {
@@ -43,11 +63,12 @@ test.describe("GTFS Domain Pages", () => {
   test("Settings page shows live backend info", async ({ page }) => {
     await page.goto(`${FE}/settings`);
     await expect(page.locator("[data-testid='settings-page']")).toBeVisible();
-    await expect(page.locator("[data-testid='settings-tool-count']")).toHaveText(
-      "7",
-      { timeout: 10000 },
-    );
-    await expect(page.locator("[data-testid='llm-provider-select']")).toBeVisible();
+    await expect(
+      page.locator("[data-testid='settings-tool-count']"),
+    ).toHaveText("14", { timeout: 10000 });
+    await expect(
+      page.locator("[data-testid='llm-provider-select']"),
+    ).toBeVisible();
   });
 
   test("Help page renders", async ({ page }) => {
@@ -57,7 +78,18 @@ test.describe("GTFS Domain Pages", () => {
 
   test("Sidebar navigates to all pages", async ({ page }) => {
     await page.goto(FE);
-    const links = ["Feeds", "Stops", "Chat", "Tools", "Skills", "Settings", "Logging", "Help"];
+    const links = [
+      "Sources",
+      "Feeds",
+      "Stops",
+      "Lines",
+      "Chat",
+      "Tools",
+      "Skills",
+      "Settings",
+      "Logging",
+      "Help",
+    ];
     for (const label of links) {
       await page.getByRole("link", { name: label }).click();
       await page.waitForLoadState("networkidle");

@@ -1,4 +1,12 @@
-import { Cpu, Database, Server, ShieldCheck } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import {
+  Check,
+  ChevronDown,
+  Cpu,
+  Database,
+  Server,
+  ShieldCheck,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import {
   Card,
@@ -16,6 +24,72 @@ interface Health {
   uptime_seconds: number;
   tool_count: number;
   providers?: Record<string, unknown>;
+}
+
+interface PickerOption {
+  value: string;
+  label: string;
+}
+
+/** Theme-controlled dropdown (Radix menu, not a native <select>).
+ *
+ * Native select popups are drawn by the browser/OS and ignore page CSS,
+ * which produced black-on-black option lists. This renders the menu as
+ * regular DOM in our palette, so it cannot go unreadable.
+ */
+function Picker({
+  testid,
+  value,
+  placeholder,
+  options,
+  onPick,
+}: {
+  testid: string;
+  value: string;
+  placeholder: string;
+  options: PickerOption[];
+  onPick: (value: string) => void;
+}) {
+  const current = options.find((o) => o.value === value);
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          data-testid={testid}
+          className="flex h-9 w-full items-center justify-between gap-2 rounded-md border border-zinc-600 bg-zinc-800 px-3 text-sm text-zinc-100 hover:bg-zinc-700"
+        >
+          <span className="truncate">
+            {current ? current.label : placeholder}
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-zinc-400" />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          className="z-50 rounded-md border border-slate-700 bg-slate-950 p-1 shadow-xl"
+          style={{ minWidth: "var(--radix-dropdown-menu-trigger-width)" }}
+          sideOffset={4}
+        >
+          {options.length === 0 && (
+            <p className="px-2 py-1.5 text-sm text-slate-400">{placeholder}</p>
+          )}
+          {options.map((o) => (
+            <DropdownMenu.Item
+              key={o.value}
+              onSelect={() => onPick(o.value)}
+              className="flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm text-slate-200 outline-none hover:bg-slate-800 hover:text-white focus:bg-slate-800 focus:text-white"
+            >
+              <span className="flex-1 truncate">{o.label}</span>
+              {o.value === value && (
+                <Check className="ml-2 h-4 w-4 shrink-0 text-emerald-400" />
+              )}
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
 }
 
 function LLMSettings() {
@@ -89,34 +163,29 @@ function LLMSettings() {
                 : "Probing..."}
           </span>
         </div>
-        <select
-          data-testid="llm-provider-select"
-          className="h-9 w-full rounded-md border border-zinc-600 bg-zinc-800 px-3 text-sm text-zinc-100"
+        <Picker
+          testid="llm-provider-select"
           value={selectedProvider}
-          onChange={(e) => {
-            setSelectedProvider(e.target.value);
-            save(e.target.value, "");
+          placeholder="Select provider"
+          options={[
+            { value: "ollama", label: "Ollama" },
+            { value: "lm_studio", label: "LM Studio" },
+          ]}
+          onPick={(v) => {
+            setSelectedProvider(v);
+            save(v, "");
           }}
-        >
-          <option value="ollama">Ollama</option>
-          <option value="lm_studio">LM Studio</option>
-        </select>
-        <select
-          data-testid="llm-model-select"
-          className="h-9 w-full rounded-md border border-zinc-600 bg-zinc-800 px-3 text-sm text-zinc-100"
+        />
+        <Picker
+          testid="llm-model-select"
           value={selectedModel}
-          onChange={(e) => {
-            setSelectedModel(e.target.value);
-            save(selectedProvider, e.target.value);
+          placeholder="No models detected"
+          options={models.map((m) => ({ value: m.name, label: m.name }))}
+          onPick={(v) => {
+            setSelectedModel(v);
+            save(selectedProvider, v);
           }}
-        >
-          {models.length === 0 && <option value="">No models detected</option>}
-          {models.map((m) => (
-            <option key={m.name} value={m.name}>
-              {m.name}
-            </option>
-          ))}
-        </select>
+        />
         <p className="text-xs text-slate-400">
           Selection persists in browser storage (llm_provider / llm_model) and
           drives the Chat page.
