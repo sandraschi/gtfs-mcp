@@ -6,7 +6,7 @@
   "type": "mcp_server",
   "status": "beta",
   "framework": "FastMCP 3.4",
-  "tools": 7,
+  "tools": 14,
   "transport": ["stdio", "http", "websocket"],
   "keywords": [
     "gtfs",

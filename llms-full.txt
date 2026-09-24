@@ -1,9 +1,9 @@
 # gtfs-mcp - Full LLM Reference
 
-Generated: 2026-08-03
+Generated: 2026-09-24
 
 FastMCP 3.4 server for downloading, parsing, and serving GTFS (General Transit
-Feed Specification) schedule data, with a FastAPI REST API, 7 MCP tools, and a
+Feed Specification) schedule data, with a FastAPI REST API, 14 MCP tools, and a
 React webapp (web_sota/).
 
 ## Ports
@@ -13,7 +13,7 @@ React webapp (web_sota/).
 | 10913 | Backend (FastAPI + MCP streamable HTTP at `/mcp`) |
 | 10912 | Frontend (Vite dev server, proxies `/api` `/mcp` `/health` -> 10913) |
 
-## MCP Tools (7)
+## MCP Tools (14)
 
 | Tool | Description |
 |------|-------------|
@@ -22,10 +22,18 @@ React webapp (web_sota/).
 | `get_departures(feed_id, stop_id, route_id=None, limit=5)` | Upcoming departures for a stop |
 | `get_stop_info(feed_id, stop_id)` | Details for one stop |
 | `find_stops(feed_id, query, limit=10)` | Case-insensitive search by name/code/id |
+| `get_stop_routes(feed_id, stop_id)` | List the transit lines serving a stop |
+| `list_routes(feed_id)` | List all transit lines of a feed (names, types, colors) |
+| `list_presets()` | List curated GTFS feed presets (Vienna, Munich, London, ...) |
+| `remove_feed(feed_id)` | Delete a feed from the depot (memory + SQLite + data dir) |
+| `depot_stats()` | Aggregate depot stats: feed counts, totals, parse jobs |
+| `export_feed(feed_id, target="mywienerlinien")` | Export a depot feed to the mywienerlinien city app |
+| `web_search(query, max_results=8)` | Search the public web for non-schedule questions |
 | `status()` | Server + feed count status |
 | `shutdown()` | Graceful server shutdown |
 
-All tools return `{success, message, ...}` dicts. Mutating: add_feed, shutdown.
+All tools return `{success, message, ...}` dicts. Mutating: add_feed, export_feed.
+Destructive: remove_feed, shutdown.
 
 ## REST Endpoints
 

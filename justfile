@@ -60,6 +60,12 @@ types:
     uv run pyright src
     @cd web_sota && npx tsc --noEmit
 
+# --- Native (Tauri) ---
+
+# Primary end-user deliverable: Vite + embedded backend + NSIS installer
+build-native:
+    powershell.exe -NoProfile -File "{{justfile_directory()}}/native/build.ps1"
+
 # --- Webapp ---
 
 # Playwright e2e tests (backend + frontend auto-start, reuse if running)

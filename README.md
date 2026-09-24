@@ -114,6 +114,13 @@ Add to your `claude_desktop_config.json`:
 | `find_stops(feed_id, query, limit=10)` | Search stops by name/code/id |
 | `get_departures(feed_id, stop_id, route_id=None, limit=5)` | Upcoming departures for a stop |
 | `get_stop_info(feed_id, stop_id)` | Details for one stop |
+| `get_stop_routes(feed_id, stop_id)` | List the transit lines serving a stop |
+| `list_routes(feed_id)` | List all transit lines of a feed (names, types, colors) |
+| `list_presets()` | List curated GTFS feed presets (Vienna, Munich, London, ...) |
+| `remove_feed(feed_id)` | Delete a feed from the depot (memory + SQLite + data dir) |
+| `depot_stats()` | Aggregate depot stats: feed counts, totals, parse jobs |
+| `export_feed(feed_id, target="mywienerlinien")` | Export a depot feed to the mywienerlinien city app |
+| `web_search(query, max_results=8)` | Search the public web for non-schedule questions |
 | `status()` | Server + feed status |
 | `shutdown()` | Graceful shutdown |
 
