@@ -42,13 +42,17 @@ const EXAMPLE_PROMPTS = [
   },
 ];
 
-const SKILL_PREPROMPT =
-  "You are an assistant for GTFS MCP — a public transit data server for GTFS schedule and real-time data.";
+interface TraceStep {
+  tool: string;
+  ok: boolean;
+  summary: string;
+}
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   ts?: string;
+  trace?: TraceStep[];
 }
 
 function loadHistory(): Message[] {
@@ -60,16 +64,7 @@ function loadHistory(): Message[] {
   }
 }
 
-function buildSystemPrompt(
-  personalityId: string,
-  customPrompt: string,
-): string {
-  const role = PERSONALITIES[personalityId] || PERSONALITIES["Transit Analyst"];
-  if (personalityId === "Custom") return customPrompt || SKILL_PREPROMPT;
-  return `${SKILL_PREPROMPT}\n\n---\n\n## Role\n${role}`;
-}
-
-const CHAT_ENDPOINT = "/api/llm/chat/stream";
+const AGENT_ENDPOINT = "/api/llm/chat-agent";
 const SKILLS_ENDPOINT = "/api/skills";
 const PROVIDERS_ENDPOINT = "/api/llm/providers";
 
@@ -136,60 +131,39 @@ export function Chat() {
       setChat(updated);
       setStreaming(true);
 
+      // Agentic backend: model calls find_stops/get_departures itself and
+      // returns the final reply plus a tool trace. System prompt (role,
+      // skill, Vienna default, depot state) is composed server-side.
       try {
-        const r = await fetch(CHAT_ENDPOINT, {
+        const r = await fetch(AGENT_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: localStorage.getItem("llm_model") || "llama3.2:3b",
-            system: buildSystemPrompt(personality, customPrompt),
+            model:
+              localStorage.getItem("llm_model") ||
+              "pdurugyan/qwen3.5-9b-deepseek-v4-flash-Q4_K_M-v_2:latest",
+            personality,
+            custom_prompt: customPrompt,
             messages: chat
               .slice(-20)
               .map((m) => ({ role: m.role, content: m.content })),
           }),
         });
-        if (!r.ok || !r.body) throw new Error(`HTTP ${r.status}`);
-
-        const partial: Message = {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = (await r.json()) as {
+          success: boolean;
+          reply?: string;
+          trace?: TraceStep[];
+          error?: string;
+        };
+        if (!d.success) throw new Error(d.error || "agent failed");
+        const assistantMsg: Message = {
           role: "assistant",
-          content: "",
+          content: d.reply || "(empty reply)",
+          trace: d.trace ?? [],
           ts: new Date().toISOString(),
         };
-        setChat((prev) => [...prev, partial]);
-
-        // Backend streams raw Ollama NDJSON: {"message":{"role":"assistant","content":"..."}}
-        const reader = r.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-          for (const line of lines) {
-            if (!line.trim()) continue;
-            try {
-              const parsed = JSON.parse(line);
-              if (parsed.error) throw new Error(parsed.error);
-              const chunk = parsed?.message?.content;
-              if (chunk) {
-                partial.content += chunk;
-                setChat((prev) => {
-                  const c = [...prev];
-                  c[c.length - 1] = { ...partial };
-                  return c;
-                });
-              }
-              if (parsed?.done) break;
-            } catch (err) {
-              if (err instanceof Error && err.message !== "Unexpected token") {
-                throw err;
-              }
-            }
-          }
-        }
-        const final = [...chat, userMsg, { ...partial }].slice(-MAX_HISTORY);
+        const final = [...updated, assistantMsg].slice(-MAX_HISTORY);
         setChat(final);
         localStorage.setItem(HISTORY_KEY, JSON.stringify(final));
       } catch (e) {
@@ -221,10 +195,12 @@ export function Chat() {
   };
   const handleExport = () => {
     if (chat.length === 0) return;
-    const lines = chat.map(
-      (m) =>
-        `[${m.ts || "no-ts"}] ${m.role === "user" ? "You" : "AI"}: ${m.content}`,
-    );
+    const lines = chat.map((m) => {
+      const trace = (m.trace ?? [])
+        .map((t) => `  [${t.ok ? "ok" : "FAIL"} ${t.tool}] ${t.summary}`)
+        .join("\n");
+      return `[${m.ts || "no-ts"}] ${m.role === "user" ? "You" : "AI"}: ${m.content}${trace ? `\n${trace}` : ""}`;
+    });
     const blob = new Blob([lines.join("\n\n---\n\n")], { type: "text/plain" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -244,13 +220,13 @@ export function Chat() {
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-bold tracking-tight text-white">Chat</h2>
           {skillName && (
-            <span className="text-[10px] text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded font-mono">
+            <span className="text-xs text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded font-mono">
               skill:{skillName}
             </span>
           )}
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+          <div className="flex items-center gap-1.5 text-xs text-zinc-400">
             <div
               className={`w-1.5 h-1.5 rounded-full ${providerOk ? "bg-green-500" : "bg-red-500"}`}
             />
@@ -320,7 +296,7 @@ export function Chat() {
             >
               {EXAMPLE_PROMPTS.map((group) => (
                 <div key={group.group}>
-                  <p className="text-[10px] uppercase tracking-wider text-zinc-600 text-left mb-1.5 px-1">
+                  <p className="text-xs uppercase tracking-wider text-zinc-500 text-left mb-1.5 px-1">
                     {group.group}
                   </p>
                   <div className="flex flex-wrap gap-1.5 justify-center">
@@ -360,9 +336,23 @@ export function Chat() {
               <div
                 className={`rounded-xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${msg.role === "user" ? "bg-blue-600/20 text-slate-200" : "bg-zinc-900/50 border border-zinc-800 text-zinc-300"}`}
               >
+                {msg.role === "assistant" &&
+                  msg.trace &&
+                  msg.trace.length > 0 && (
+                    <div className="mb-2 space-y-0.5 border-b border-zinc-800 pb-2">
+                      {msg.trace.map((t) => (
+                        <p
+                          key={`${t.tool}-${t.summary}`}
+                          className={`font-mono text-xs ${t.ok ? "text-slate-500" : "text-red-400"}`}
+                        >
+                          {t.ok ? "✓" : "✗"} {t.tool} — {t.summary}
+                        </p>
+                      ))}
+                    </div>
+                  )}
                 {msg.content ||
                   (i === chat.length - 1 && streaming ? (
-                    <span className="animate-pulse">...</span>
+                    <span className="animate-pulse">…</span>
                   ) : (
                     ""
                   ))}

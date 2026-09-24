@@ -221,7 +221,7 @@ export default function Logging() {
           Clear
         </button>
 
-        <span className="text-xs text-slate-500 ml-auto">{total} entries</span>
+        <span className="text-xs text-slate-400 ml-auto">{total} entries</span>
       </div>
 
       <div
@@ -241,7 +241,7 @@ export default function Logging() {
               {e.timestamp.split(".")[0].split("T")[1] || e.timestamp}
             </span>
             <span
-              className={`w-16 shrink-0 text-center rounded text-[10px] font-bold ${LEVEL_COLORS[e.level] || "text-slate-400"}`}
+              className={`w-16 shrink-0 text-center rounded text-xs font-bold ${LEVEL_COLORS[e.level] || "text-slate-400"}`}
             >
               {e.level}
             </span>
@@ -254,7 +254,7 @@ export default function Logging() {
         <div ref={endRef} />
       </div>
 
-      <div className="flex items-center justify-between text-xs text-slate-500">
+      <div className="flex items-center justify-between text-xs text-slate-400">
         <button
           type="button"
           className="px-3 py-1 rounded border border-slate-700 hover:bg-slate-800 disabled:opacity-30"

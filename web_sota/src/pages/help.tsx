@@ -1,5 +1,6 @@
 import {
   Cpu,
+  Database,
   Globe,
   HelpCircle,
   Network,
@@ -53,6 +54,37 @@ const SECTIONS: Array<{
       "Empty departures: stop may have no stop_times or the feed lacks calendar data.",
       "Chat disabled: start Ollama (11434) or LM Studio (1234) and reload.",
       "Logs: /api/logs ring buffer or the Logging page.",
+    ],
+  },
+  {
+    icon: Globe,
+    title: "Sources & presets",
+    lines: [
+      "Sources page: 20 curated city feeds (Vienna verified, Munich, Berlin, Hamburg, Paris, London, NYC, Boston...).",
+      "Verified badge = known-good URL. Community badge = best effort, check the notes field.",
+      "KeyRound badge (Tokyo, Singapore) needs a free API key first.",
+      "One click POSTs /v1/feeds/from-preset; parsing progress appears on the Feeds depot page.",
+      "Backend list: GET /v1/presets. MCP: list_presets tool.",
+    ],
+  },
+  {
+    icon: Database,
+    title: "Depot & parsing lifecycle",
+    lines: [
+      "Feeds page = the depot: SQLite (data/gtfs_mcp.db) + data/<feed_id>/*.txt + in-memory index.",
+      "Stages: queued -> downloading -> extracting -> parsing -> persisting -> done (or failed). Poll GET /v1/jobs.",
+      "Per-feed: counts (stops/routes/trips), progress bar, refresh (force re-download), delete (memory+SQLite+dir).",
+      "MCP: depot_stats, remove_feed. REST: GET /v1/depot/stats, DELETE /v1/feeds/{id}, POST /v1/feeds/{id}/refresh.",
+    ],
+  },
+  {
+    icon: Database,
+    title: "Export to mywienerlinien",
+    lines: [
+      "Trash/download icons on each depot row: export copies *.txt into a per-city folder mywienerlinien/scripts/gtfs_data/cities/<feed_id>/ + manifest.json (plus cities/index.json). Never touches the shared extracted/ Vienna files.",
+      "mywienerlinien's live reader still points at extracted/ (Vienna) - per-city data switching over there is a separate change; cities/index.json lists what is ready for it.",
+      "REST: POST /v1/feeds/{id}/export {target: mywienerlinien}. MCP: export_feed(feed_id).",
+      "Counts travel in the manifest so the city app knows what it got.",
     ],
   },
   {
@@ -235,12 +267,18 @@ export function Help() {
         <CardContent>
           <ol className="list-decimal space-y-1.5 pl-5 text-sm text-slate-300">
             <li>
-              Add a feed on the <strong>Feeds</strong> page (e.g. Wiener Linien
-              GTFS zip).
+              Pick a city on the <strong>Sources</strong> page (Vienna works out
+              of the box) or add a feed URL on the <strong>Feeds</strong> depot
+              page.
             </li>
             <li>
-              Search for a station on the <strong>Stops</strong> page and read
-              its departures.
+              Watch parsing progress on the depot, then search for a station on
+              the <strong>Stops</strong> page and read its departures.
+            </li>
+            <li>
+              Optionally export the Vienna feed to{" "}
+              <strong>mywienerlinien</strong> (download icon per depot row) for
+              the live city map.
             </li>
             <li>
               Ask natural-language questions on the <strong>Chat</strong> page

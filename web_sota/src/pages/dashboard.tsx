@@ -1,5 +1,6 @@
 import { Activity, Clock, Cpu, Database, Layers, Shield } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { API_BASE } from "@/lib/api";
 
@@ -36,6 +37,10 @@ export function Dashboard() {
   const [backendOk, setBackendOk] = useState<boolean | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [pollIndex, setPollIndex] = useState(0);
+  const [depot, setDepot] = useState<{
+    feed_count: number;
+    total_stops: number;
+  } | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -62,6 +67,14 @@ export function Dashboard() {
       .then((r) => r.json())
       .then((d) => setLogs(d.entries ?? []))
       .catch(() => setLogs([]));
+    fetch(`${API_BASE}/v1/depot/stats`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (d) =>
+          d &&
+          setDepot({ feed_count: d.feed_count, total_stops: d.total_stops }),
+      )
+      .catch(() => undefined);
   }, []);
 
   const statusText =
@@ -117,9 +130,41 @@ export function Dashboard() {
                 className="rounded-xl border border-slate-700/60 bg-slate-900/60 px-3 py-2"
               >
                 <p className="text-lg font-bold text-white">{value}</p>
-                <p className="text-[11px] text-slate-400">{label}</p>
+                <p className="text-xs text-slate-300">{label}</p>
               </div>
             ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <Link
+              to="/sources"
+              data-testid="hero-cta-sources"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
+            >
+              Browse sources (Vienna, Munich, London...)
+            </Link>
+            <Link
+              to="/feeds"
+              data-testid="hero-cta-depot"
+              className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800"
+            >
+              Open depot{depot ? ` (${depot.feed_count} feeds)` : ""}
+            </Link>
+            <Link
+              to="/stops"
+              data-testid="hero-cta-stops"
+              className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800"
+            >
+              Find stops
+            </Link>
+            {depot && depot.feed_count > 0 && (
+              <span
+                data-testid="hero-live-feeds"
+                className="text-xs text-slate-400"
+              >
+                {depot.feed_count} feed(s) loaded -{" "}
+                {depot.total_stops.toLocaleString()} stops in depot
+              </span>
+            )}
           </div>
         </div>
       </section>
