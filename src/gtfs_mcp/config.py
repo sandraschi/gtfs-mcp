@@ -9,6 +9,10 @@ from pathlib import Path
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Relative paths resolve against the repo root, never the CWD: Claude Desktop
+# spawns stdio servers with cwd=C:\Windows\System32 (BUG-063).
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 class DatabaseSettings(BaseSettings):
     """Database configuration."""
@@ -17,6 +21,18 @@ class DatabaseSettings(BaseSettings):
 
     # Database URL (e.g., sqlite+aiosqlite:///gtfs_mcp.db)
     url: str = "sqlite+aiosqlite:///gtfs_mcp.db"
+
+    @field_validator("url")
+    @classmethod
+    def anchor_relative_sqlite(cls, v: str) -> str:
+        """Make a relative SQLite file path absolute under the repo root."""
+        prefix, sep, rest = v.partition(":///")
+        if not prefix.startswith("sqlite") or not sep or not rest or rest.startswith(":memory:"):
+            return v
+        file_part, q, query = rest.partition("?")
+        if Path(file_part).is_absolute():
+            return v
+        return f"{prefix}:///{(_REPO_ROOT / file_part).as_posix()}{q}{query}"
 
     # Connection pool settings
     pool_size: int = 10
@@ -68,7 +84,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GTFS_MCP_",
         env_nested_delimiter="__",
-        env_file=".env",
+        env_file=str(_REPO_ROOT / ".env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
     )
@@ -145,7 +161,10 @@ class Settings(BaseSettings):
         if v is None:
             return v
 
-        path = Path(v).resolve()
+        path = Path(v)
+        if not path.is_absolute():
+            path = _REPO_ROOT / path
+        path = path.resolve()
         path.mkdir(parents=True, exist_ok=True)
         return path
 
@@ -163,7 +182,9 @@ class Settings(BaseSettings):
         """Get the database URL with proper formatting."""
         if self.database.url.startswith("sqlite"):
             # For SQLite, ensure the parent directory exists
-            db_path = Path(self.database.url.replace("sqlite:///", "").split("?")[0])
+            # partition, not replace("sqlite:///", ""): that also matched inside
+            # "aiosqlite:///" and mangled the path.
+            db_path = Path(self.database.url.partition(":///")[2].split("?")[0])
             if not db_path.parent.exists():
                 db_path.parent.mkdir(parents=True, exist_ok=True)
         return self.database.url

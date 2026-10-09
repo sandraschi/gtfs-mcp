@@ -21,6 +21,8 @@ from fastmcp import FastMCP
 from fastmcp.server import create_proxy
 from fastmcp.server.lifespan import lifespan
 
+from .config import settings
+
 __version__ = "0.1.0"
 
 # Configure logging
@@ -30,7 +32,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger("gtfs-mcp")
 
-DATA_DIR = Path("data")
+# Same repo-anchored dir the FastAPI app uses (settings.data_dir), never CWD-relative (BUG-063)
+DATA_DIR = settings.data_dir
 
 
 @lifespan
