@@ -4,6 +4,7 @@ GTFS Service Layer
 Provides GTFS functionality through FastMCP tools.
 """
 
+import asyncio
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -18,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 # Initialize feed manager
 feed_manager: GTFSFeedManager | None = None
+# Background restore of stored feeds, started by initialize_gtfs_service
+_restore_task: asyncio.Task | None = None
 
 _READ_ONLY = {"readonly": True}
 _MUTATING = {}
@@ -162,8 +165,8 @@ async def get_departures(
     if not feed:
         return {
             "success": False,
-            "message": f"Feed not found: {feed_id}",
-            "error": f"Feed not found: {feed_id}",
+            "message": _feed_missing_msg(feed_id),
+            "error": _feed_missing_msg(feed_id),
             "departures": [],
         }
 
@@ -224,8 +227,8 @@ async def get_stop_info(
     if not feed:
         return {
             "success": False,
-            "message": f"Feed not found: {feed_id}",
-            "error": f"Feed not found: {feed_id}",
+            "message": _feed_missing_msg(feed_id),
+            "error": _feed_missing_msg(feed_id),
             "stop": None,
         }
 
@@ -286,8 +289,8 @@ async def find_stops(
     if not feed:
         return {
             "success": False,
-            "message": f"Feed not found: {feed_id}",
-            "error": f"Feed not found: {feed_id}",
+            "message": _feed_missing_msg(feed_id),
+            "error": _feed_missing_msg(feed_id),
             "stops": [],
         }
 
@@ -361,8 +364,8 @@ async def get_stop_routes(
     if not feed:
         return {
             "success": False,
-            "message": f"Feed not found: {feed_id}",
-            "error": f"Feed not found: {feed_id}",
+            "message": _feed_missing_msg(feed_id),
+            "error": _feed_missing_msg(feed_id),
             "routes": [],
         }
 
@@ -413,8 +416,8 @@ async def list_routes(
     if not feed:
         return {
             "success": False,
-            "message": f"Feed not found: {feed_id}",
-            "error": f"Feed not found: {feed_id}",
+            "message": _feed_missing_msg(feed_id),
+            "error": _feed_missing_msg(feed_id),
             "routes": [],
         }
 
@@ -539,7 +542,7 @@ async def remove_feed(
         return {"success": False, "message": "Feed manager not initialized", "error": "Feed manager not initialized"}
     removed = await feed_manager.remove_feed(feed_id)
     if not removed:
-        return {"success": False, "message": f"Feed not found: {feed_id}", "error": f"Feed not found: {feed_id}"}
+        return {"success": False, "message": _feed_missing_msg(feed_id), "error": _feed_missing_msg(feed_id)}
     return {"success": True, "message": f"Feed {feed_id} deleted"}
 
 
@@ -622,15 +625,29 @@ async def shutdown() -> dict:
 
 
 async def initialize_gtfs_service(data_dir: Path) -> None:
-    """Initialize the GTFS service with data directory."""
-    global feed_manager
+    """Initialize the GTFS service with data directory.
+
+    Creates the feed manager and returns; restoring stored feeds runs as a
+    background task. Restoring the Vienna feed takes ~3 minutes, and awaiting
+    it here kept the MCP lifespan from yielding, so stdio clients never got an
+    initialize reply (Claude Desktop gives up after ~60s).
+    """
+    global feed_manager, _restore_task
 
     try:
         feed_manager = GTFSFeedManager(data_dir)
         logger.info("GTFS service initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize GTFS service: {e!s}")
+        raise
+    _restore_task = asyncio.create_task(_restore_feeds(feed_manager), name="gtfs-restore-feeds")
 
+
+async def _restore_feeds(manager: GTFSFeedManager) -> None:
+    """Restore stored feeds from SQLite, then the default feed if still missing."""
+    try:
         # Restore persisted feeds from SQLite (no re-download).
-        await feed_manager.load_all_from_db()
+        await manager.load_all_from_db()
 
         # Optionally load the configured default feed
         # (GTFS_MCP_DEFAULT_FEED_URL - defaults to the Wiener Linien feed).
@@ -641,19 +658,36 @@ async def initialize_gtfs_service(data_dir: Path) -> None:
         # Skip when already restored from SQLite by load_all_from_db above:
         # without this every boot re-materializes the 8M-row Vienna feed a
         # second time for no benefit (refresh is a depot-UI action).
-        if default_url and "default" not in feed_manager.feeds:
+        if default_url and "default" not in manager.feeds:
             try:
-                await feed_manager.add_feed("default", str(default_url))
+                await manager.add_feed("default", str(default_url))
             except Exception as e:
                 logger.warning("Default feed load failed (continuing): %s", e)
-    except Exception as e:
-        logger.error(f"Failed to initialize GTFS service: {e!s}")
+        logger.info("Feed restore complete: %s", list(manager.feeds))
+    except asyncio.CancelledError:
         raise
+    except Exception as e:
+        logger.error("Feed restore failed: %s", e)
+
+
+def _feed_missing_msg(feed_id: str) -> str:
+    """'Feed not found', noting when stored feeds are still being restored."""
+    if _restore_task is not None and not _restore_task.done():
+        return f"Feed not found: {feed_id} (stored feeds are still loading from SQLite - retry in a minute)"
+    return f"Feed not found: {feed_id}"
 
 
 async def cleanup_gtfs_service() -> None:
     """Clean up GTFS service resources."""
-    global feed_manager
+    global feed_manager, _restore_task
+
+    if _restore_task is not None and not _restore_task.done():
+        _restore_task.cancel()
+        try:
+            await _restore_task
+        except asyncio.CancelledError:
+            pass
+    _restore_task = None
 
     if feed_manager:
         await feed_manager.close()
