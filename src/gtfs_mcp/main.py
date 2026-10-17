@@ -97,7 +97,14 @@ app.add_middleware(
 app.include_router(api_router)
 app.include_router(llm_router)
 
-# Mount MCP Streamable HTTP app (FastMCP 3: use http_app(), not .app)
+# Mount MCP Streamable HTTP app (FastMCP 3: use http_app(path="/"), not .app —
+# the default path would double-prefix under the mount, BUG-008).
+# NOTE (assfix 2026-10-17): folding the sub-app lifespan into the parent's
+# (BUG-038) was attempted two ways — mcp_app.router.lifespan_context(app) and
+# StarletteWithLifespan.lifespan(app) — and BOTH hang the TestClient suite
+# (2s green -> >90s hang, reverted). Production-uvicorn behavior is unverified;
+# retry only with a live background-uvicorn + streamable-HTTP list_tools()
+# proof, never by breaking `just test` again.
 app.mount("/mcp", mcp.http_app(path="/"))
 
 

@@ -1,8 +1,8 @@
-"""GTFS MCP Server - A FastMCP 2.10 compliant server for GTFS data.
+"""GTFS MCP Server - A FastMCP 3.4 compliant server for GTFS data.
 
 This package provides a standardized interface for accessing, querying, and managing
 GTFS (General Transit Feed Specification) data from various transit agencies.
-It implements the FastMCP 2.10 specification to expose GTFS data through a
+It implements the FastMCP 3.4 specification to expose GTFS data through a
 consistent API that can be used by MCP-compatible clients.
 
 Key Features:
@@ -58,7 +58,7 @@ async def _gtfs_mcp_lifespan(server):
 mcp = FastMCP(
     name="gtfs-mcp",
     version=__version__,
-    instructions="GTFS data server with FastMCP 2.10",
+    instructions="GTFS data server with FastMCP 3.4",
     lifespan=_gtfs_mcp_lifespan,
 )
 
