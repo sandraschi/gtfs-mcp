@@ -21,7 +21,7 @@ Get-NetTCPConnection -LocalPort $FrontendPort -ErrorAction SilentlyContinue |
 $childStyle = if ($Headless) { 'Hidden' } else { 'Normal' }
 
 # Start backend (HTTP transport on 10913; REST + MCP at /mcp)
-Start-Process pwsh -ArgumentList '-NoProfile', '-Command', 'uv run -m gtfs_mcp' -WindowStyle $childStyle
+Start-Process pwsh -ArgumentList '-NoProfile', '-Command', 'uv run -m gtfs_mcp' -WorkingDirectory $ScriptRoot -WindowStyle $childStyle
 
 # Backend readiness TCP poll
 $ready = $false

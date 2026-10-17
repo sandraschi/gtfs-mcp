@@ -2,21 +2,34 @@
   "manifest_version": "0.2",
   "name": "gtfs-mcp",
   "version": "0.1.0",
-  "description": "FastMCP 3.1.0 compliant GTFS server for transit data",
+  "description": "FastMCP 3.4 server for downloading, parsing, and serving GTFS (General Transit Feed Specification) data. Transit data access with parser handling malformed feeds.",
   "author": { "name": "sandraschi" },
   "server": {
     "type": "python",
-    "entry_point": "src/gtfs_mcp/server.py",
+    "entry_point": "src/gtfs_mcp/__main__.py",
     "mcp_config": {
-      "command": "uv",
-      "args": ["run","--directory","${PWD}","python","-m","gtfs_mcp"],
+      "command": "python",
+      "args": ["-m", "gtfs_mcp"],
       "env": {
-        "PYTHONPATH": "${PWD}/src",
+        "PYTHONPATH": "${__dirname}/src",
         "PYTHONUNBUFFERED": "1"
       }
     }
   },
   "tools": [
-    { "name": "add_feed", "description": "add_feed" }
+    { "name": "add_feed", "description": "Add/update a GTFS feed by downloading its zip" },
+    { "name": "list_feeds", "description": "List registered feeds with status" },
+    { "name": "get_departures", "description": "Upcoming departures for a stop" },
+    { "name": "get_stop_info", "description": "Details for one stop" },
+    { "name": "find_stops", "description": "Case-insensitive stop search by name/code/id" },
+    { "name": "get_stop_routes", "description": "List the transit lines serving a stop" },
+    { "name": "list_routes", "description": "List all transit lines of a feed" },
+    { "name": "list_presets", "description": "List curated GTFS feed presets" },
+    { "name": "remove_feed", "description": "Delete a feed from the depot" },
+    { "name": "depot_stats", "description": "Aggregate depot stats across feeds" },
+    { "name": "export_feed", "description": "Export a depot feed to the mywienerlinien city app" },
+    { "name": "web_search", "description": "Web search for non-schedule questions" },
+    { "name": "status", "description": "Server + feed count status" },
+    { "name": "shutdown", "description": "Graceful server shutdown" }
   ]
 }

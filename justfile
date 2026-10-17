@@ -19,6 +19,10 @@ fix:
     uv run ruff check . --fix --unsafe-fixes
     uv run ruff format .
 
+# Format check (fleet gate name `fmt`; `fix` above does check + autofix)
+fmt:
+    uv run ruff format --check .
+
 # --- Hardening ---
 
 # Execute Bandit security audit
