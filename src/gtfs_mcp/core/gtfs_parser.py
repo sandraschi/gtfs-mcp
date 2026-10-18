@@ -25,6 +25,7 @@ class GTFSValidationError(Exception):
 # dates deliberately stay strings - "25:30:00" must never become a number.
 _FLOAT_COLUMNS: dict[str, tuple[str, ...]] = {
     "stops": ("stop_lat", "stop_lon"),
+    "shapes": ("shape_pt_lat", "shape_pt_lon"),
 }
 _INT_COLUMNS: dict[str, tuple[str, ...]] = {
     "stops": ("location_type", "wheelchair_boarding"),
@@ -33,6 +34,7 @@ _INT_COLUMNS: dict[str, tuple[str, ...]] = {
     "stop_times": ("stop_sequence", "pickup_type", "drop_off_type", "timepoint"),
     "calendar": ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"),
     "calendar_dates": ("exception_type",),
+    "shapes": ("shape_pt_sequence",),
 }
 
 
@@ -49,12 +51,14 @@ class GTFSFeed:
         self.stop_times: list[dict[str, Any]] = []
         self.calendar: list[dict[str, Any]] = []
         self.calendar_dates: list[dict[str, Any]] = []
+        self.shapes: list[dict[str, Any]] = []
 
         # Mappings for quick lookups
         self.routes_by_id: dict[str, dict[str, Any]] = {}
         self.stops_by_id: dict[str, dict[str, Any]] = {}
         self.trips_by_id: dict[str, dict[str, Any]] = {}
         self.stop_times_by_trip: dict[str, list[dict[str, Any]]] = {}
+        self.shapes_by_id: dict[str, list[dict[str, Any]]] = {}
 
         # Lazy stop -> distinct routes index (built on first request, cached).
         # Not built in load(): one more 8M-row pass at boot for data the user
@@ -74,7 +78,7 @@ class GTFSFeed:
 
         Accepts the same table layout as GTFSFeed.load() produces:
         agencies, stops, routes, trips, stop_times, calendar, calendar_dates,
-        feed_info (list with a single dict).
+        shapes, feed_info (list with a single dict).
         """
         feed = cls(Path("."))
         feed.agencies = list(rows.get("agencies", []))
@@ -84,6 +88,7 @@ class GTFSFeed:
         feed.stop_times = list(rows.get("stop_times", []))
         feed.calendar = list(rows.get("calendar", []))
         feed.calendar_dates = list(rows.get("calendar_dates", []))
+        feed.shapes = list(rows.get("shapes", []))
         info = rows.get("feed_info") or []
         feed.feed_info = dict(info[0]) if info else {}
         feed._coerce_types()
@@ -112,6 +117,7 @@ class GTFSFeed:
         self.stop_times = self._load_list("stop_times.txt", progress_cb=progress_cb)
         self.calendar = self._load_list("calendar.txt", required=False)
         self.calendar_dates = self._load_list("calendar_dates.txt", required=False)
+        self.shapes = self._load_list("shapes.txt", required=False)
 
         # Load feed info if available
         self.feed_info = self._load_single("feed_info.txt")
@@ -219,6 +225,7 @@ class GTFSFeed:
             "stop_times": self.stop_times,
             "calendar": self.calendar,
             "calendar_dates": self.calendar_dates,
+            "shapes": self.shapes,
         }
         for table, rows in tables.items():
             for row in rows:
@@ -252,6 +259,27 @@ class GTFSFeed:
         # Sort stop times by sequence
         for trip_id in self.stop_times_by_trip:
             self.stop_times_by_trip[trip_id].sort(key=lambda x: int(x.get("stop_sequence") or 0))
+
+        # Group shape points by shape_id, ordered by sequence (map polylines).
+        # Missing/garbage sequences sort last instead of raising on malformed rows.
+        def _seq_key(pt: dict[str, Any]) -> tuple[int, float]:
+            v = pt.get("shape_pt_sequence")
+            return (0, float(v)) if isinstance(v, (int, float)) else (1, 0.0)
+
+        self.shapes_by_id = {}
+        for pt in self.shapes:
+            shape_id = pt.get("shape_id") or ""
+            self.shapes_by_id.setdefault(shape_id, []).append(pt)
+        for pts in self.shapes_by_id.values():
+            pts.sort(key=_seq_key)
+
+    def get_shape_points(self, shape_id: str) -> list[dict[str, Any]]:
+        """Ordered polyline points for a shape_id (empty list when unknown)."""
+        return list(self.shapes_by_id.get(shape_id, []))
+
+    def list_shapes(self) -> list[dict[str, Any]]:
+        """Shape ids with point counts (shape discovery for the map)."""
+        return [{"shape_id": sid, "point_count": len(pts)} for sid, pts in sorted(self.shapes_by_id.items())]
 
     def get_routes_for_stop(self, stop_id: str) -> list[dict[str, Any]]:
         """Distinct transit lines serving a stop (cached after first build).

@@ -221,6 +221,35 @@ async def export_feed(feed_id: str, body: ExportRequest):
     return result
 
 
+@router.get("/shapes", response_model=list[dict])
+async def list_shapes(feed_id: str = Query(..., description="ID of the GTFS feed")):
+    """Shape ids with point counts (map polyline discovery)."""
+    from ....services.gtfs_service import feed_manager
+
+    if feed_manager is None:
+        raise HTTPException(status_code=503, detail="Feed manager not initialized")
+    feed = feed_manager.get_feed(feed_id)
+    if feed is None:
+        raise HTTPException(status_code=404, detail=f"Feed not found: {feed_id}")
+    return feed.list_shapes()
+
+
+@router.get("/shapes/{shape_id}", response_model=list[dict])
+async def get_shape_points(shape_id: str, feed_id: str = Query(..., description="ID of the GTFS feed")):
+    """Ordered polyline points for one shape_id."""
+    from ....services.gtfs_service import feed_manager
+
+    if feed_manager is None:
+        raise HTTPException(status_code=503, detail="Feed manager not initialized")
+    feed = feed_manager.get_feed(feed_id)
+    if feed is None:
+        raise HTTPException(status_code=404, detail=f"Feed not found: {feed_id}")
+    return [
+        {"lat": p.get("shape_pt_lat"), "lon": p.get("shape_pt_lon"), "seq": p.get("shape_pt_sequence")}
+        for p in feed.get_shape_points(shape_id)
+    ]
+
+
 @router.get("/stops/search", response_model=list[dict])
 async def find_stops(
     feed_id: str = Query(..., description="ID of the GTFS feed"),

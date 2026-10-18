@@ -602,6 +602,58 @@ async def export_feed(
     return result
 
 
+@mcp.tool(annotations=_READ_ONLY)
+async def list_shapes(
+    feed_id: Annotated[str, Field(description="ID of the depot feed")],
+) -> dict:
+    """List shape ids with point counts (map polyline discovery).
+
+    Shapes are the GTFS polylines the map draws; pair with get_shape_points.
+
+    ## Return Format
+    {"success": bool, "message": str, "shapes": [{"shape_id": str, "point_count": int}], "error": str | None}
+
+    ## Examples
+    list_shapes(feed_id="default")
+    """
+    global feed_manager
+
+    if feed_manager is None:
+        return {"success": False, "message": "Feed manager not initialized", "error": "Feed manager not initialized"}
+    feed = feed_manager.get_feed(feed_id)
+    if feed is None:
+        return {"success": False, "message": f"Feed not found: {feed_id}", "error": f"Feed not found: {feed_id}"}
+    shapes = feed.list_shapes()
+    return {"success": True, "message": f"{len(shapes)} shape(s) in feed {feed_id}", "shapes": shapes}
+
+
+@mcp.tool(annotations=_READ_ONLY)
+async def get_shape_points(
+    feed_id: Annotated[str, Field(description="ID of the depot feed")],
+    shape_id: Annotated[str, Field(description="Shape id from list_shapes")],
+) -> dict:
+    """Ordered polyline points for one shape_id (map rendering).
+
+    ## Return Format
+    {"success": bool, "message": str, "points": [{"lat": float, "lon": float, "seq": int}], "error": str | None}
+
+    ## Examples
+    get_shape_points(feed_id="default", shape_id="1")
+    """
+    global feed_manager
+
+    if feed_manager is None:
+        return {"success": False, "message": "Feed manager not initialized", "error": "Feed manager not initialized"}
+    feed = feed_manager.get_feed(feed_id)
+    if feed is None:
+        return {"success": False, "message": f"Feed not found: {feed_id}", "error": f"Feed not found: {feed_id}"}
+    points = [
+        {"lat": p.get("shape_pt_lat"), "lon": p.get("shape_pt_lon"), "seq": p.get("shape_pt_sequence")}
+        for p in feed.get_shape_points(shape_id)
+    ]
+    return {"success": True, "message": f"{len(points)} point(s) on shape {shape_id}", "points": points}
+
+
 @mcp.tool(annotations={"destructive": True})
 async def shutdown() -> dict:
     """Shut down the gtfs-mcp server gracefully.

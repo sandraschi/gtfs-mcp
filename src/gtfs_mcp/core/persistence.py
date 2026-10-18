@@ -29,6 +29,7 @@ _KEY_FOR: dict[str, str] = {
     "stop_times": "stop_id",
     "calendar": "service_id",
     "calendar_dates": "service_id",
+    "shapes": "shape_id",
     "agencies": "agency_id",
     "feed_info": "feed_publisher_name",
 }

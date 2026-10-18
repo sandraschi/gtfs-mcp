@@ -19,6 +19,7 @@ from aiohttp import ClientError, ClientSession
 
 from .gtfs_parser import GTFSFeed, GTFSValidationError
 from .persistence import GTFSPersistence
+from .snapshot import write_snapshot
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,10 @@ class GTFSFeedManager:
         # Create directories if they don't exist
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        # Normalized per-feed snapshots (SPEC-gtfs-delegation Phase 1 contract):
+        # <data_dir>/snapshots/<safe_feed_id>.db, read directly by mywienerlinien.
+        self.snapshot_dir = (self.data_dir / "snapshots").resolve()
+        self.snapshot_dir.mkdir(parents=True, exist_ok=True)
 
         # Parse-job tracker: feed_id -> {status, stage, progress, message, updated_at}
         # Powers the "ongoing parsing" display on the Sources/Depot pages.
@@ -102,6 +107,7 @@ class GTFSFeedManager:
             "stop_times": feed.stop_times,
             "calendar": feed.calendar,
             "calendar_dates": feed.calendar_dates,
+            "shapes": feed.shapes,
             "feed_info": [feed.feed_info] if feed.feed_info else [],
         }
 
@@ -113,6 +119,20 @@ class GTFSFeedManager:
             await store.save_feed(feed_id, url, self._table_rows(feed))
         except Exception as e:
             logger.warning("Could not persist feed %s to SQLite: %s", feed_id, e)
+
+    def snapshot_path(self, feed_id: str) -> Path:
+        """Contract path snapshot readers use: <data_dir>/snapshots/<safe_feed_id>.db."""
+        return self.snapshot_dir / f"{self._safe_dir_name(feed_id)}.db"
+
+    async def _write_snapshot(self, feed_id: str, url: str, feed: GTFSFeed, only_if_missing: bool = False) -> None:
+        """Write the normalized Phase-1 snapshot (warn-only: never break a good parse)."""
+        dest = self.snapshot_path(feed_id)
+        if only_if_missing and dest.exists():
+            return
+        try:
+            await asyncio.to_thread(write_snapshot, feed, feed_id, url, dest)
+        except Exception as e:
+            logger.warning("Could not write snapshot for %s: %s", feed_id, e)
 
     async def _load_from_db(self, feed_id: str, url: str | None = None) -> GTFSFeed | None:
         store = await self._ensure_persistence()
@@ -194,6 +214,7 @@ class GTFSFeedManager:
                 self.feeds[feed_id] = cached
                 self.update_intervals[feed_id] = update_interval
                 self._set_job(feed_id, "done", "done", 1.0, "Restored from local depot (no download)")
+                await self._write_snapshot(feed_id, url, cached, only_if_missing=True)
                 return cached
 
         # Check if we need to update the feed
@@ -232,6 +253,8 @@ class GTFSFeedManager:
             self.feeds[feed_id] = feed
             self._set_job(feed_id, "running", "persisting", 0.85, "Saving to depot")
             await self._persist_feed(feed_id, url, feed)
+            self._set_job(feed_id, "running", "snapshotting", 0.92, "Writing normalized snapshot")
+            await self._write_snapshot(feed_id, url, feed)
             self._set_job(
                 feed_id,
                 "done",
@@ -274,6 +297,7 @@ class GTFSFeedManager:
                     "trips": len(feed.trips) if feed.loaded else 0,
                     "stop_times": len(feed.stop_times) if feed.loaded else 0,
                     "status": "loaded",
+                    "snapshot": self.snapshot_path(feed_id).exists(),
                     "job_status": job.get("status") if job else None,
                     "job_stage": job.get("stage") if job else None,
                     "job_progress": job.get("progress") if job else None,
@@ -305,6 +329,13 @@ class GTFSFeedManager:
                 found = True
             except Exception as e:
                 logger.warning("Could not remove feed dir %s: %s", feed_dir, e)
+        snap = self.snapshot_path(feed_id)
+        if snap.exists():
+            try:
+                await asyncio.to_thread(snap.unlink)
+                found = True
+            except Exception as e:
+                logger.warning("Could not remove snapshot %s: %s", snap, e)
         return found
 
     async def depot_stats(self) -> dict:
