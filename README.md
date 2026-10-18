@@ -65,7 +65,7 @@ and indexes the data so you can just ask for departures.
   restored on restart - no re-download, data survives server restarts
 - **Vienna by default**: the Wiener Linien GTFS feed loads automatically as
   feed id `default` (override via `GTFS_MCP_DEFAULT_FEED_URL`)
-- **7 MCP Tools**: add_feed, list_feeds, find_stops, get_departures, get_stop_info, status, shutdown
+- **14 MCP Tools**: add_feed, list_feeds, find_stops, get_departures, get_stop_info, get_stop_routes, list_routes, list_presets, remove_feed, depot_stats, export_feed, web_search, status, shutdown
 - **RESTful API**: `/v1/feeds`, `/v1/stops/*`, health, capabilities, logs
 - **Local LLM Chat**: Ollama/LM Studio discovery + streaming chat proxy
 - **Webapp**: React dashboard with live health KPIs (web_sota/, port 10912)

@@ -2,6 +2,38 @@
 
 All notable changes to gtfs-mcp are documented here.
 
+## [Unreleased] - 2026-10-17 (assfix + docs sync)
+
+### Fixed
+- **MCPB manifest spec-clean** — removed `${PWD}` (NONSPEC, unexpanded by
+  Claude Desktop) and the `run_server.py` sidecar entry; now
+  `python -m gtfs_mcp` (stdio) with `${__dirname}/src`, all 14 tools listed,
+  FastMCP 3.4 description. Mechanical audit reports no NONSPEC/SIDECAR.
+- **Frontend API base Tauri-gated** — `web_sota/src/lib/api.ts` is same-origin
+  by default (vite proxy) with the absolute `:10913` URL only under the Tauri
+  gate; `vite.config.ts` now proxies `/v1` and `/skill` too (previously only
+  `/api` `/health` `/mcp`, so Sources/Skills/Feeds calls got SPA `index.html`
+  instead of JSON). Proved live through a scratch vite instance.
+- **`docs/ONBOARDING.md` added** — zero-to-departures in five minutes (no
+  wrappee install, no account; Vienna default feed + first three tool calls).
+- **`start.ps1` backend `-WorkingDirectory`**, **`justfile` `fmt` recipe**,
+  **`scripts/mcpb-pack.ps1` shim**, pwsh-7 exemption note on `mcpb/pack.ps1`.
+- **Tracked `.bak` dross removed** (7 files).
+
+### Docs
+- `docs/TOOLS.md` listed 7 tools — now all 14, plus the missing REST rows
+  (presets, jobs, depot stats, feed lifecycle, `/v1/routes`, chat-agent).
+- `README.md` "7 MCP Tools" summary — now 14 (table already was).
+- `llms-full.txt` regenerated date + full endpoint table.
+
+### Deferred (open findings)
+- H4 parent/MCP lifespan composition: both `router.lifespan_context` and
+  `StarletteWithLifespan.lifespan(app)` hang the TestClient suite; reverted,
+  retry only with live-uvicorn proof. Prompts/Prefab/output_schema/resource
+  gaps, npm→bun migration, stdio probe, `skillbuild gtfs-mcp`.
+- Release-time: README one-liner + `install.ps1`, `mcp-clients.nsh`, binary
+  `.mcpb` pack.
+
 ## [0.1.2] - 2026-09-24 (assfix re-run)
 
 Re-audit against a large uncommitted batch of new work (multi-city presets,

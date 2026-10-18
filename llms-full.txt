@@ -1,6 +1,6 @@
 # gtfs-mcp - Full LLM Reference
 
-Generated: 2026-09-24
+Generated: 2026-10-17
 
 FastMCP 3.4 server for downloading, parsing, and serving GTFS (General Transit
 Feed Specification) schedule data, with a FastAPI REST API, 14 MCP tools, and a
@@ -44,11 +44,13 @@ Destructive: remove_feed, shutdown.
 | `GET /api/capabilities` | Feature discovery for the webapp |
 | `GET /api/skills`, `GET /skill/{name}` | Skill manifest + SKILL.md content |
 | `GET /api/llm/providers`, `/api/llm/discover` | Ollama/LM Studio probe + model lists |
-| `POST /api/llm/chat/stream` | NDJSON streaming chat proxy to Ollama |
-| `POST /api/llm/chat` | Non-streaming chat completion |
+| `POST /api/llm/chat/stream`, `/api/llm/chat`, `/api/llm/chat-agent` | Streaming / plain / agentic chat (backend proxy; keys never leave the server) |
 | `GET /api/logs`, `/api/logs/stats`, `/api/logs/export`, `DELETE /api/logs` | Ring-buffer log API |
 | `GET /api/v1/diagnostics` | Tool list + system info (CUA-NSIS smoke) |
-| `GET/POST /v1/feeds`, `GET /v1/stops/search`, `GET /v1/stops/{id}`, `GET /v1/stops/{id}/departures` | GTFS domain API |
+| `GET/POST /v1/feeds`, `GET /v1/stops/search`, `GET /v1/stops/{id}`, `GET /v1/stops/{id}/departures`, `GET /v1/stops/{id}/routes`, `GET /v1/routes` | GTFS domain API (stops, departures, lines) |
+| `GET /v1/presets`, `POST /v1/feeds/from-preset` | Curated presets + one-click add (Sources page) |
+| `GET /v1/jobs`, `GET /v1/feeds/{id}/progress`, `GET /v1/depot/stats` | Parse jobs + depot stats (Feeds page) |
+| `DELETE /v1/feeds/{id}`, `POST /v1/feeds/{id}/refresh`, `POST /v1/feeds/{id}/export` | Feed lifecycle |
 | `GET /mcp` | MCP streamable HTTP transport |
 
 ## Environment Variables
@@ -77,7 +79,7 @@ Linien) feed is the default and is loaded as feed id `default` on first run.
 - `src/gtfs_mcp/main.py` - FastAPI app (CORS fleet regex, health, capabilities,
   logs, llm proxy, diagnostics), mounts `mcp.http_app()` at `/mcp`
 - `src/gtfs_mcp/__init__.py` - FastMCP instance + lifespan (init/cleanup service)
-- `src/gtfs_mcp/services/gtfs_service.py` - the 7 MCP tools (Annotated+Field,
+- `src/gtfs_mcp/services/gtfs_service.py` - the 14 MCP tools (Annotated+Field,
   Return Format + Examples docstrings, dialogic returns)
 - `src/gtfs_mcp/core/gtfs_parser.py` - GTFS zip/CSV parsing, calendar logic
 - `src/gtfs_mcp/core/feed_manager.py` - async download + update lifecycle
@@ -85,7 +87,9 @@ Linien) feed is the default and is loaded as feed id `default` on first run.
   `mcp.http_app()` with CORSMiddleware (never run_http_async)
 - `run_server.py` - PyInstaller entry: `MCP_PORT` set -> HTTP, else stdio
 - `web_sota/` - React 19 + Vite 7 + Tailwind 3 + lucide-react webapp
-  (Dashboard with live health KPIs, Chat skill-first, Settings LLM, Logging)
+  (Dashboard, Feeds depot, Sources presets, Stops, Lines, Tools, Skills,
+  Chat skill-first, Settings LLM, Logging, Help; same-origin API via vite
+  proxy, absolute backend URL only under the Tauri gate)
 
 ## Troubleshooting
 
