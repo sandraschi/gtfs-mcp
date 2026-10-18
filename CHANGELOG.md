@@ -4,6 +4,19 @@ All notable changes to gtfs-mcp are documented here.
 
 ## [Unreleased] - 2026-10-17 (assfix + docs sync)
 
+### Added (SPEC-gtfs-delegation Phase 1)
+- **Normalized per-feed snapshots** — each parse writes
+  `<data_dir>/snapshots/<feed_id>.db` (stops/routes/trips/stop_times/
+  calendar/calendar_dates/shapes/feed_info, WAL, `_meta` schema pin v1,
+  tmp + atomic replace). `list_feeds` reports `snapshot` presence;
+  `remove_feed` deletes the snapshot too.
+- **Shapes support end to end** — `shapes.txt` parsed (ordered, garbage
+  tolerant), persisted through the depot blob store, served via
+  `list_shapes` / `get_shape_points` tools and `GET /v1/shapes[/{id}]`.
+  Tool count 14 → 16.
+- **`GTFS_MCP_MYWIENERLINIEN_ROOT`** — env-rooted export (sibling fallback);
+  export refuses with guidance when unresolvable. No hardcoded paths.
+
 ### Fixed
 - **MCPB manifest spec-clean** — removed `${PWD}` (NONSPEC, unexpanded by
   Claude Desktop) and the `run_server.py` sidecar entry; now

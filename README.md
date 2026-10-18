@@ -65,7 +65,7 @@ and indexes the data so you can just ask for departures.
   restored on restart - no re-download, data survives server restarts
 - **Vienna by default**: the Wiener Linien GTFS feed loads automatically as
   feed id `default` (override via `GTFS_MCP_DEFAULT_FEED_URL`)
-- **14 MCP Tools**: add_feed, list_feeds, find_stops, get_departures, get_stop_info, get_stop_routes, list_routes, list_presets, remove_feed, depot_stats, export_feed, web_search, status, shutdown
+- **16 MCP Tools**: add_feed, list_feeds, find_stops, get_departures, get_stop_info, get_stop_routes, list_routes, list_presets, list_shapes, get_shape_points, remove_feed, depot_stats, export_feed, web_search, status, shutdown
 - **RESTful API**: `/v1/feeds`, `/v1/stops/*`, health, capabilities, logs
 - **Local LLM Chat**: Ollama/LM Studio discovery + streaming chat proxy
 - **Webapp**: React dashboard with live health KPIs (web_sota/, port 10912)
@@ -121,6 +121,8 @@ Add to your `claude_desktop_config.json`:
 | `depot_stats()` | Aggregate depot stats: feed counts, totals, parse jobs |
 | `export_feed(feed_id, target="mywienerlinien")` | Export a depot feed to the mywienerlinien city app |
 | `web_search(query, max_results=8)` | Search the public web for non-schedule questions |
+| `list_shapes(feed_id)` | Shape ids with point counts (map polyline discovery) |
+| `get_shape_points(feed_id, shape_id)` | Ordered polyline points for one shape |
 | `status()` | Server + feed status |
 | `shutdown()` | Graceful shutdown |
 

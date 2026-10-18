@@ -13,7 +13,7 @@ React webapp (web_sota/).
 | 10913 | Backend (FastAPI + MCP streamable HTTP at `/mcp`) |
 | 10912 | Frontend (Vite dev server, proxies `/api` `/mcp` `/health` -> 10913) |
 
-## MCP Tools (14)
+## MCP Tools (16)
 
 | Tool | Description |
 |------|-------------|
@@ -29,6 +29,8 @@ React webapp (web_sota/).
 | `depot_stats()` | Aggregate depot stats: feed counts, totals, parse jobs |
 | `export_feed(feed_id, target="mywienerlinien")` | Export a depot feed to the mywienerlinien city app |
 | `web_search(query, max_results=8)` | Search the public web for non-schedule questions |
+| `list_shapes(feed_id)` | Shape ids with point counts (map polyline discovery) |
+| `get_shape_points(feed_id, shape_id)` | Ordered polyline points for one shape |
 | `status()` | Server + feed count status |
 | `shutdown()` | Graceful server shutdown |
 
@@ -51,7 +53,16 @@ Destructive: remove_feed, shutdown.
 | `GET /v1/presets`, `POST /v1/feeds/from-preset` | Curated presets + one-click add (Sources page) |
 | `GET /v1/jobs`, `GET /v1/feeds/{id}/progress`, `GET /v1/depot/stats` | Parse jobs + depot stats (Feeds page) |
 | `DELETE /v1/feeds/{id}`, `POST /v1/feeds/{id}/refresh`, `POST /v1/feeds/{id}/export` | Feed lifecycle |
+| `GET /v1/shapes`, `GET /v1/shapes/{shape_id}` | Shape discovery + ordered polyline points (`?feed_id=`) |
 | `GET /mcp` | MCP streamable HTTP transport |
+
+## Snapshots (SPEC-gtfs-delegation Phase 1 contract)
+
+Every parsed feed also writes `<data_dir>/snapshots/<feed_id>.db`: normalized
+tables (stops/routes/trips/stop_times/calendar/calendar_dates/shapes/feed_info),
+WAL mode, `_meta` row with `schema_version: 1`, built to `.tmp` + atomic
+replace. mywienerlinien reads this file directly for bulk map data; feed CRUD
+and refresh stay on MCP/REST. `list_feeds` reports per-feed `snapshot` presence.
 
 ## Environment Variables
 
@@ -82,7 +93,10 @@ Linien) feed is the default and is loaded as feed id `default` on first run.
 - `src/gtfs_mcp/__init__.py` - FastMCP instance + lifespan (init/cleanup service)
 - `src/gtfs_mcp/services/gtfs_service.py` - the 14 MCP tools (Annotated+Field,
   Return Format + Examples docstrings, dialogic returns)
-- `src/gtfs_mcp/core/gtfs_parser.py` - GTFS zip/CSV parsing, calendar logic
+- `src/gtfs_mcp/core/gtfs_parser.py` - GTFS zip/CSV parsing, calendar logic,
+  shapes polylines (ordered, garbage-tolerant)
+- `src/gtfs_mcp/core/snapshot.py` - normalized per-feed SQLite snapshots
+  (WAL, atomic replace, `_meta` schema pin) for the delegation contract
 - `src/gtfs_mcp/core/feed_manager.py` - async download + update lifecycle
 - `src/gtfs_mcp/transport.py` - dual transport; HTTP mode uses uvicorn.Server on
   `mcp.http_app()` with CORSMiddleware (never run_http_async)

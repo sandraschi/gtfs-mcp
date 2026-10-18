@@ -1,6 +1,6 @@
 # TOOLS
 
-## MCP Tools (14)
+## MCP Tools (16)
 
 ### add_feed
 Add or update a GTFS feed by downloading the zip from the given URL.
@@ -71,6 +71,16 @@ Search the public web for non-schedule questions.
 - `query` (str, required), `max_results` (int, default 8)
 - Returns: `{success, message, results: [...]}`
 
+### list_shapes
+Shape ids with point counts (map polyline discovery).
+- `feed_id` (str, required)
+- Returns: `{success, message, shapes: [{shape_id, point_count}]}`
+
+### get_shape_points
+Ordered polyline points for one shape_id (map rendering).
+- `feed_id` (str, required), `shape_id` (str, required)
+- Returns: `{success, message, points: [{lat, lon, seq}]}`
+
 ## REST Endpoints
 
 | Method | Path | Purpose |
@@ -101,7 +111,16 @@ Search the public web for non-schedule questions.
 | POST | `/v1/feeds/{feed_id}/refresh` | Force feed refresh |
 | GET | `/v1/depot/stats` | Aggregate depot stats |
 | POST | `/v1/feeds/{feed_id}/export` | Export to mywienerlinien |
+| GET | `/v1/shapes` | Shape ids + point counts (`?feed_id=`) |
+| GET | `/v1/shapes/{shape_id}` | Ordered polyline points (`?feed_id=`) |
 | GET | `/mcp` | MCP streamable HTTP transport |
+
+## Snapshots (Phase 1 delegation contract)
+
+Each parsed feed also writes `<data_dir>/snapshots/<feed_id>.db`: normalized
+tables, WAL mode, `_meta` schema pin (`schema_version: 1`), atomic replace.
+Read directly by mywienerlinien for bulk map data. `list_feeds` reports
+per-feed `snapshot` presence.
 
 ## Discovery
 
