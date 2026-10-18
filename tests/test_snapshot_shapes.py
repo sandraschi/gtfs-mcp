@@ -80,11 +80,17 @@ def test_write_snapshot_contract(feed, tmp_path):
     assert result["counts"]["stops"] == 1
     assert result["counts"]["shapes"] == 6
     assert result["counts"]["shape_ids"] == 2
+    assert result["counts"]["agencies"] == 1
     con = sqlite3.connect(dest)
     try:
         assert con.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
         assert con.execute("SELECT COUNT(*) FROM stop_times").fetchone()[0] == 1
-        assert con.execute("SELECT lat, lon FROM shapes WHERE shape_id = 'shapeB'").fetchone() == (1.0, 2.0)
+        row = con.execute("SELECT shape_pt_lat, shape_pt_lon FROM shapes WHERE shape_id = 'shapeB'").fetchone()
+        assert row == (1.0, 2.0)
+        assert con.execute("SELECT agency_name FROM agencies").fetchone() == ("Test",)
+        assert con.execute("SELECT stop_name FROM stops").fetchone() == ("Stephansplatz",)
+        cols = [r[1] for r in con.execute("PRAGMA table_info(stops)").fetchall()]
+        assert "stop_code" in cols and "zone_id" in cols
         meta = dict(con.execute("SELECT key, value FROM _meta").fetchall())
         assert meta["schema_version"] == "1"
         assert meta["feed_id"] == "wien"

@@ -9,6 +9,8 @@ Contract (mywienerlinien reads this file directly, no MCP round-trip for bulk):
   can pin or migrate instead of guessing
 - bulk ``executemany`` inserts throughout: 6M+ stop_times rows stall per-row ORM
   (the feed module's own docs warn about this)
+- column names are stock GTFS file names (``stop_name``, not ``name``), so the
+  reader's existing GTFS queries run unchanged against the snapshot
 
 Every row extractor below is defensive (``.get`` + safe numeric coercion):
 real-world feeds omit optional columns and ship garbage in numeric ones.
@@ -26,36 +28,44 @@ logger = logging.getLogger(__name__)
 SNAPSHOT_SCHEMA_VERSION = 1
 
 _DDL = """
+CREATE TABLE agencies(
+    agency_id TEXT PRIMARY KEY,
+    agency_name TEXT
+);
 CREATE TABLE stops(
     stop_id TEXT PRIMARY KEY,
-    name TEXT,
-    lat REAL,
-    lon REAL,
+    stop_code TEXT,
+    stop_name TEXT,
+    stop_lat REAL,
+    stop_lon REAL,
+    zone_id TEXT,
     parent_station TEXT,
-    location_type INTEGER
+    location_type INTEGER,
+    wheelchair_boarding INTEGER
 );
 CREATE TABLE routes(
     route_id TEXT PRIMARY KEY,
-    short_name TEXT,
-    long_name TEXT,
-    type INTEGER,
-    color TEXT,
-    text_color TEXT
+    agency_id TEXT,
+    route_short_name TEXT,
+    route_long_name TEXT,
+    route_type INTEGER,
+    route_color TEXT,
+    route_text_color TEXT
 );
 CREATE TABLE trips(
     trip_id TEXT PRIMARY KEY,
     route_id TEXT,
     service_id TEXT,
-    headsign TEXT,
+    trip_headsign TEXT,
     direction_id INTEGER,
     shape_id TEXT
 );
 CREATE TABLE stop_times(
     trip_id TEXT,
+    arrival_time TEXT,
+    departure_time TEXT,
     stop_id TEXT,
-    sequence INTEGER,
-    arrival TEXT,
-    departure TEXT
+    stop_sequence INTEGER
 );
 CREATE INDEX idx_stop_times_stop ON stop_times(stop_id);
 CREATE INDEX idx_stop_times_trip ON stop_times(trip_id);
@@ -70,22 +80,22 @@ CREATE TABLE calendar(
 CREATE TABLE calendar_dates(
     service_id TEXT,
     date TEXT,
-    exception INTEGER
+    exception_type INTEGER
 );
 CREATE INDEX idx_calendar_dates_service ON calendar_dates(service_id);
 CREATE TABLE shapes(
     shape_id TEXT,
-    seq INTEGER,
-    lat REAL,
-    lon REAL
+    shape_pt_lat REAL,
+    shape_pt_lon REAL,
+    shape_pt_sequence INTEGER
 );
-CREATE INDEX idx_shapes_id ON shapes(shape_id, seq);
+CREATE INDEX idx_shapes_id ON shapes(shape_id, shape_pt_sequence);
 CREATE TABLE feed_info(
-    publisher TEXT,
-    url TEXT,
-    lang TEXT,
-    start_date TEXT,
-    end_date TEXT
+    feed_publisher_name TEXT,
+    feed_publisher_url TEXT,
+    feed_lang TEXT,
+    feed_start_date TEXT,
+    feed_end_date TEXT
 );
 CREATE TABLE _meta(
     key TEXT PRIMARY KEY,
@@ -134,23 +144,31 @@ def write_snapshot(feed: Any, feed_id: str, source_url: str, dest: Path) -> dict
         con.execute("PRAGMA journal_mode=WAL")
         con.executescript(_DDL)
 
+        agencies = [(_s(a.get("agency_id")), _s(a.get("agency_name"))) for a in feed.agencies]
+        con.executemany("INSERT OR REPLACE INTO agencies VALUES (?,?)", agencies)
+        counts["agencies"] = len(agencies)
+
         stops = [
             (
                 _s(s.get("stop_id")),
+                _s(s.get("stop_code")),
                 _s(s.get("stop_name")),
                 _f(s.get("stop_lat")),
                 _f(s.get("stop_lon")),
+                _s(s.get("zone_id")),
                 _s(s.get("parent_station")),
                 _i(s.get("location_type")),
+                _i(s.get("wheelchair_boarding")),
             )
             for s in feed.stops
         ]
-        con.executemany("INSERT OR REPLACE INTO stops VALUES (?,?,?,?,?,?)", stops)
+        con.executemany("INSERT OR REPLACE INTO stops VALUES (?,?,?,?,?,?,?,?,?)", stops)
         counts["stops"] = len(stops)
 
         routes = [
             (
                 _s(r.get("route_id")),
+                _s(r.get("agency_id")),
                 _s(r.get("route_short_name")),
                 _s(r.get("route_long_name")),
                 _i(r.get("route_type")),
@@ -159,7 +177,7 @@ def write_snapshot(feed: Any, feed_id: str, source_url: str, dest: Path) -> dict
             )
             for r in feed.routes
         ]
-        con.executemany("INSERT OR REPLACE INTO routes VALUES (?,?,?,?,?,?)", routes)
+        con.executemany("INSERT OR REPLACE INTO routes VALUES (?,?,?,?,?,?,?)", routes)
         counts["routes"] = len(routes)
 
         trips = [
@@ -179,10 +197,10 @@ def write_snapshot(feed: Any, feed_id: str, source_url: str, dest: Path) -> dict
         stop_times = [
             (
                 _s(st.get("trip_id")),
-                _s(st.get("stop_id")),
-                _i(st.get("stop_sequence")),
                 _s(st.get("arrival_time")),
                 _s(st.get("departure_time")),
+                _s(st.get("stop_id")),
+                _i(st.get("stop_sequence")),
             )
             for st in feed.stop_times
         ]
@@ -216,9 +234,9 @@ def write_snapshot(feed: Any, feed_id: str, source_url: str, dest: Path) -> dict
         shapes = [
             (
                 _s(p.get("shape_id")),
-                _i(p.get("shape_pt_sequence")),
                 _f(p.get("shape_pt_lat")),
                 _f(p.get("shape_pt_lon")),
+                _i(p.get("shape_pt_sequence")),
             )
             for p in feed.shapes
         ]
