@@ -575,7 +575,9 @@ async def export_feed(
     Copies the feed's CSV tables into a per-city folder
     mywienerlinien/scripts/gtfs_data/cities/<feed_id>/ + manifest.json
     (plus cities/index.json) so Vienna tooling and other cities never
-    clobber each other's files.
+    clobber each other's files. The mywienerlinien root resolves via
+    GTFS_MCP_MYWIENERLINIEN_ROOT env (else a sibling checkout); when it
+    cannot be resolved the export refuses with guidance.
 
     ## Return Format
     {"success": bool, "message": str, "dest": str | None, "files": [...], "error": str | None}

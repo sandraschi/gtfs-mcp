@@ -6,6 +6,7 @@ Handles downloading, updating, and managing GTFS feed data.
 
 import asyncio
 import logging
+import os
 import shutil
 import tempfile
 import zipfile
@@ -20,6 +21,25 @@ from .gtfs_parser import GTFSFeed, GTFSValidationError
 from .persistence import GTFSPersistence
 
 logger = logging.getLogger(__name__)
+
+
+def resolve_mywienerlinien_cities_root() -> Path | None:
+    """Where `export_to_mywienerlinien` writes (never a hardcoded path).
+
+    Precedence: explicit GTFS_MCP_MYWIENERLINIEN_ROOT env (read fresh on every
+    call, so tests can monkeypatch) → Settings.mywienerlinien_root (env value
+    at import, else a `mywienerlinien` sibling of the repo root carrying
+    scripts/gtfs_data) → None (caller refuses with guidance).
+    """
+    explicit = os.environ.get("GTFS_MCP_MYWIENERLINIEN_ROOT", "").strip()
+    if explicit:
+        return Path(explicit).expanduser() / "scripts" / "gtfs_data" / "cities"
+    from ..config import get_settings
+
+    root = get_settings().mywienerlinien_root
+    if root is None:
+        return None
+    return Path(root) / "scripts" / "gtfs_data" / "cities"
 
 
 class GTFSFeedManager:
@@ -340,8 +360,11 @@ class GTFSFeedManager:
         """Copy a parsed feed's CSV tables into a per-city dir in the mywienerlinien tree.
 
         Each feed gets its own folder
-        ``mywienerlinien/scripts/gtfs_data/cities/<feed_id>/`` (+ manifest.json),
+        ``<mywienerlinien>/scripts/gtfs_data/cities/<feed_id>/`` (+ manifest.json),
         so exporting Munich never clobbers Vienna's ``extracted/`` files.
+        The mywienerlinien root resolves via GTFS_MCP_MYWIENERLINIEN_ROOT env,
+        else a `mywienerlinien` sibling of this repo; when neither resolves the
+        export refuses with guidance instead of writing nowhere.
         mywienerlinien's live reader still points at ``extracted/`` (Vienna) -
         per-city data switching over there is a separate change; ``cities/``
         carries an index.json listing everything available for it.
@@ -361,7 +384,16 @@ class GTFSFeedManager:
                 "message": f"Feed directory missing: {src_dir}",
                 "error": f"Feed directory missing: {src_dir}",
             }
-        cities_root = Path("D:/Dev/repos/mywienerlinien/scripts/gtfs_data/cities")
+        cities_root = resolve_mywienerlinien_cities_root()
+        if cities_root is None:
+            return {
+                "success": False,
+                "message": (
+                    "mywienerlinien checkout not found: set GTFS_MCP_MYWIENERLINIEN_ROOT "
+                    "to its repo root (or check out mywienerlinien next to gtfs-mcp)"
+                ),
+                "error": "mywienerlinien_root unresolved",
+            }
         dest_root = cities_root / safe_id
         try:
             dest_root.mkdir(parents=True, exist_ok=True)

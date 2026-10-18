@@ -139,6 +139,12 @@ class Settings(BaseSettings):
     update_interval: int = 86400  # 24 hours
     max_feed_size_mb: int = 200  # Maximum feed size in MB
 
+    # mywienerlinien export root (cross-repo file drop, SPEC-gtfs-delegation Phase 0).
+    # Explicit env (GTFS_MCP_MYWIENERLINIEN_ROOT) wins; empty falls back to a
+    # `mywienerlinien` sibling of the repo root carrying scripts/gtfs_data;
+    # otherwise None and the export refuses with guidance (never a hardcoded path).
+    mywienerlinien_root: Path | None = None
+
     # Performance
     max_workers: int = 4
     cache_ttl: int = 300  # seconds
@@ -167,6 +173,21 @@ class Settings(BaseSettings):
         path = path.resolve()
         path.mkdir(parents=True, exist_ok=True)
         return path
+
+    @field_validator("mywienerlinien_root", mode="before")
+    @classmethod
+    def resolve_mywienerlinien_root(cls, v):
+        """Resolve the mywienerlinien checkout without creating dirs in it.
+
+        Never mkdir here: this points into another repo's tree and the export
+        creates its own destination folders.
+        """
+        if v:
+            return Path(v).expanduser()
+        sibling = _REPO_ROOT.parent / "mywienerlinien"
+        if (sibling / "scripts" / "gtfs_data").is_dir():
+            return sibling
+        return None
 
     @field_validator("log_level")
     @classmethod

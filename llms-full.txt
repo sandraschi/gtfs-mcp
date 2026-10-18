@@ -62,6 +62,7 @@ Destructive: remove_feed, shutdown.
 | `GTFS_MCP_LOG_LEVEL` | INFO | Log level |
 | `GTFS_MCP_DEFAULT_FEED_URL` | Wiener Linien GTFS zip | Default feed (Vienna, id `default`) loaded at startup |
 | `GTFS_MCP_DATA_DIR` | `data` | Feed data + `gtfs_mcp.db` persistence store |
+| `GTFS_MCP_MYWIENERLINIEN_ROOT` | sibling `../mywienerlinien` if present | mywienerlinien checkout root for `export_feed` (else export refuses with guidance) |
 | `GTFS_MCP_DISCOVERY__TRANSITFEEDS_API_KEY` | - | Feed discovery key |
 | `MCP_TRANSPORT` | stdio | stdio/http/sse (dual transport) |
 | `MCP_PORT` / `PORT` | - | run_server.py: set -> HTTP mode |

@@ -203,7 +203,8 @@ async def export_feed(feed_id: str, body: ExportRequest):
 
     Copies the feed's extracted CSV tables into a per-city folder
     mywienerlinien/scripts/gtfs_data/cities/<feed_id>/ + manifest.json
-    (never touches the shared extracted/ Vienna files).
+    (never touches the shared extracted/ Vienna files). The mywienerlinien
+    root resolves via GTFS_MCP_MYWIENERLINIEN_ROOT env (else sibling checkout).
     """
     from ....services.gtfs_service import feed_manager
 
