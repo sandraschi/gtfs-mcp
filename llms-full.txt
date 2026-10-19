@@ -27,7 +27,7 @@ React webapp (web_sota/).
 | `list_presets()` | List curated GTFS feed presets (Vienna, Munich, London, ...) |
 | `remove_feed(feed_id)` | Delete a feed from the depot (memory + SQLite + data dir) |
 | `depot_stats()` | Aggregate depot stats: feed counts, totals, parse jobs |
-| `export_feed(feed_id, target="mywienerlinien")` | Export a depot feed to the mywienerlinien city app |
+| `export_feed(feed_id, target="publictransport-mcp")` | Export a depot feed to the publictransport-mcp city app |
 | `web_search(query, max_results=8)` | Search the public web for non-schedule questions |
 | `list_shapes(feed_id)` | Shape ids with point counts (map polyline discovery) |
 | `get_shape_points(feed_id, shape_id)` | Ordered polyline points for one shape |
@@ -61,7 +61,7 @@ Destructive: remove_feed, shutdown.
 Every parsed feed also writes `<data_dir>/snapshots/<feed_id>.db`: normalized
 tables (stops/routes/trips/stop_times/calendar/calendar_dates/shapes/feed_info),
 WAL mode, `_meta` row with `schema_version: 1`, built to `.tmp` + atomic
-replace. mywienerlinien reads this file directly for bulk map data; feed CRUD
+replace. publictransport-mcp reads this file directly for bulk map data; feed CRUD
 and refresh stay on MCP/REST. `list_feeds` reports per-feed `snapshot` presence.
 
 ## Environment Variables
@@ -73,7 +73,7 @@ and refresh stay on MCP/REST. `list_feeds` reports per-feed `snapshot` presence.
 | `GTFS_MCP_LOG_LEVEL` | INFO | Log level |
 | `GTFS_MCP_DEFAULT_FEED_URL` | Wiener Linien GTFS zip | Default feed (Vienna, id `default`) loaded at startup |
 | `GTFS_MCP_DATA_DIR` | `data` | Feed data + `gtfs_mcp.db` persistence store |
-| `GTFS_MCP_MYWIENERLINIEN_ROOT` | sibling `../mywienerlinien` if present | mywienerlinien checkout root for `export_feed` (else export refuses with guidance) |
+| `GTFS_MCP_PUBLICtransport_ROOT` | sibling `../publictransport-mcp` if present | publictransport-mcp checkout root for `export_feed` (else export refuses with guidance; `GTFS_MCP_MYWIENERLINIEN_ROOT` still accepted) |
 | `GTFS_MCP_DISCOVERY__TRANSITFEEDS_API_KEY` | - | Feed discovery key |
 | `MCP_TRANSPORT` | stdio | stdio/http/sse (dual transport) |
 | `MCP_PORT` / `PORT` | - | run_server.py: set -> HTTP mode |

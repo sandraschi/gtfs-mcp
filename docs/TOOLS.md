@@ -62,8 +62,8 @@ Aggregate depot stats: feed counts, totals, parse jobs.
 - Returns: `{success, message, ...}`
 
 ### export_feed
-Export a depot feed to the mywienerlinien city app. Mutating.
-- `feed_id` (str, required), `target` (str, default `"mywienerlinien"`)
+Export a depot feed to the publictransport-mcp city app. Mutating.
+- `feed_id` (str, required), `target` (str, default `"publictransport-mcp"`, `"mywienerlinien"` accepted as deprecated alias)
 - Returns: `{success, message}`
 
 ### web_search
@@ -110,7 +110,7 @@ Ordered polyline points for one shape_id (map rendering).
 | DELETE | `/v1/feeds/{feed_id}` | Remove a feed |
 | POST | `/v1/feeds/{feed_id}/refresh` | Force feed refresh |
 | GET | `/v1/depot/stats` | Aggregate depot stats |
-| POST | `/v1/feeds/{feed_id}/export` | Export to mywienerlinien |
+| POST | `/v1/feeds/{feed_id}/export` | Export to publictransport-mcp |
 | GET | `/v1/shapes` | Shape ids + point counts (`?feed_id=`) |
 | GET | `/v1/shapes/{shape_id}` | Ordered polyline points (`?feed_id=`) |
 | GET | `/mcp` | MCP streamable HTTP transport |
@@ -119,7 +119,7 @@ Ordered polyline points for one shape_id (map rendering).
 
 Each parsed feed also writes `<data_dir>/snapshots/<feed_id>.db`: normalized
 tables, WAL mode, `_meta` schema pin (`schema_version: 1`), atomic replace.
-Read directly by mywienerlinien for bulk map data. `list_feeds` reports
+Read directly by publictransport-mcp for bulk map data. `list_feeds` reports
 per-feed `snapshot` presence.
 
 ## Discovery

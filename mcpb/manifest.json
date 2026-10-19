@@ -27,7 +27,7 @@
     { "name": "list_presets", "description": "List curated GTFS feed presets" },
     { "name": "remove_feed", "description": "Delete a feed from the depot" },
     { "name": "depot_stats", "description": "Aggregate depot stats across feeds" },
-    { "name": "export_feed", "description": "Export a depot feed to the mywienerlinien city app" },
+    { "name": "export_feed", "description": "Export a depot feed to the publictransport-mcp city app" },
     { "name": "web_search", "description": "Web search for non-schedule questions" },
     { "name": "status", "description": "Server + feed count status" },
     { "name": "shutdown", "description": "Graceful server shutdown" }

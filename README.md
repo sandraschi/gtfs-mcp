@@ -119,7 +119,7 @@ Add to your `claude_desktop_config.json`:
 | `list_presets()` | List curated GTFS feed presets (Vienna, Munich, London, ...) |
 | `remove_feed(feed_id)` | Delete a feed from the depot (memory + SQLite + data dir) |
 | `depot_stats()` | Aggregate depot stats: feed counts, totals, parse jobs |
-| `export_feed(feed_id, target="mywienerlinien")` | Export a depot feed to the mywienerlinien city app |
+| `export_feed(feed_id, target="publictransport-mcp")` | Export a depot feed to the publictransport-mcp city app |
 | `web_search(query, max_results=8)` | Search the public web for non-schedule questions |
 | `list_shapes(feed_id)` | Shape ids with point counts (map polyline discovery) |
 | `get_shape_points(feed_id, shape_id)` | Ordered polyline points for one shape |
@@ -208,12 +208,12 @@ just certify         # ruff + pyright + pytest + tsc + biome
 
 ## Related Projects
 
-- **[mywienerlinien](https://github.com/sandraschi/mywienerlinien)** — Vienna
-  Transit Hub. Consumer of the same Wiener Linien GTFS data: loads the feed
-  into PostgreSQL/PostGIS and shows a live map with schedule-interpolated
-  pseudo-vehicle tracking (Wiener Linien publishes no live vehicle
-  positions). Separate repo for historic reasons; gtfs-mcp is the
-  general-purpose schedule server, mywienerlinien the city-specific app.
+- **[publictransport-mcp](https://github.com/sandraschi/publictransport-mcp)** - Vienna
+  Transit Hub. Consumer of the same Wiener Linien GTFS data: reads snapshots
+  and per-city exports, live map with schedule-interpolated pseudo-vehicle
+  tracking (Wiener Linien publishes no live vehicle positions). Separate repo
+  for historic reasons; gtfs-mcp is the general-purpose schedule server and
+  publictransport-mcp the city-specific app.
 
 ## License
 

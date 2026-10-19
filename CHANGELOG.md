@@ -14,8 +14,9 @@ All notable changes to gtfs-mcp are documented here.
   tolerant), persisted through the depot blob store, served via
   `list_shapes` / `get_shape_points` tools and `GET /v1/shapes[/{id}]`.
   Tool count 14 → 16.
-- **`GTFS_MCP_MYWIENERLINIEN_ROOT`** — env-rooted export (sibling fallback);
+- **`GTFS_MCP_PUBLICTRANSPORT_ROOT`** - env-rooted export (sibling fallback);
   export refuses with guidance when unresolvable. No hardcoded paths.
+  `GTFS_MCP_MYWIENERLINIEN_ROOT` still accepted as a deprecated alias.
 
 ### Fixed
 - **MCPB manifest spec-clean** — removed `${PWD}` (NONSPEC, unexpanded by
