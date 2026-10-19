@@ -1,17 +1,17 @@
-"""Tests for the mywienerlinien cities/ export (env-rooted, never hardcoded)."""
+"""Tests for the publictransport-mcp cities/ export (env-rooted, never hardcoded)."""
 
 import json
 from types import SimpleNamespace
 
 from gtfs_mcp import config as config_module
-from gtfs_mcp.core.feed_manager import GTFSFeedManager, resolve_mywienerlinien_cities_root
+from gtfs_mcp.core.feed_manager import GTFSFeedManager, resolve_publictransport_cities_root
 
 
 def _manager_with_feed(tmp_path, monkeypatch):
     """Manager with a stubbed parsed feed and an env-pointed export root."""
-    root = tmp_path / "mywienerlinien"
+    root = tmp_path / "publictransport-mcp"
     (root / "scripts" / "gtfs_data").mkdir(parents=True)
-    monkeypatch.setenv("GTFS_MCP_MYWIENERLINIEN_ROOT", str(root))
+    monkeypatch.setenv("GTFS_MCP_PUBLICtransport_ROOT", str(root))
     mgr = GTFSFeedManager(tmp_path / "depot", persist=False)
     feed_dir = tmp_path / "depot" / "wien"
     feed_dir.mkdir(parents=True)
@@ -22,14 +22,22 @@ def _manager_with_feed(tmp_path, monkeypatch):
 
 
 def test_resolve_prefers_explicit_env(tmp_path, monkeypatch):
-    monkeypatch.setenv("GTFS_MCP_MYWIENERLINIEN_ROOT", str(tmp_path / "elsewhere"))
-    resolved = resolve_mywienerlinien_cities_root()
+    monkeypatch.setenv("GTFS_MCP_PUBLICtransport_ROOT", str(tmp_path / "elsewhere"))
+    resolved = resolve_publictransport_cities_root()
     assert resolved == tmp_path / "elsewhere" / "scripts" / "gtfs_data" / "cities"
+
+
+def test_resolve_accepts_legacy_env_alias(tmp_path, monkeypatch):
+    """GTFS_MCP_MYWIENERLINIEN_ROOT keeps working (deprecated alias)."""
+    monkeypatch.delenv("GTFS_MCP_PUBLICtransport_ROOT", raising=False)
+    monkeypatch.setenv("GTFS_MCP_MYWIENERLINIEN_ROOT", str(tmp_path / "legacy"))
+    resolved = resolve_publictransport_cities_root()
+    assert resolved == tmp_path / "legacy" / "scripts" / "gtfs_data" / "cities"
 
 
 def test_export_writes_manifest_and_index(tmp_path, monkeypatch):
     mgr, root = _manager_with_feed(tmp_path, monkeypatch)
-    result = mgr.export_to_mywienerlinien("wien")
+    result = mgr.export_to_publictransport("wien")
     assert result["success"] is True
     dest = root / "scripts" / "gtfs_data" / "cities" / "wien"
     assert (dest / "stops.txt").exists()
@@ -43,7 +51,7 @@ def test_export_writes_manifest_and_index(tmp_path, monkeypatch):
 
 def test_export_unknown_feed_refuses(tmp_path, monkeypatch):
     mgr, _root = _manager_with_feed(tmp_path, monkeypatch)
-    result = mgr.export_to_mywienerlinien("munich")
+    result = mgr.export_to_publictransport("munich")
     assert result["success"] is False
     assert "not found" in result["message"].lower()
 
@@ -51,17 +59,18 @@ def test_export_unknown_feed_refuses(tmp_path, monkeypatch):
 def test_export_unresolved_root_refuses_with_guidance(tmp_path, monkeypatch):
     """No env, no settings root: refuse instead of writing nowhere.
 
-    Goliath checkouts carry a real mywienerlinien sibling, so the cached
+    Goliath checkouts carry a real publictransport-mcp sibling, so the cached
     settings object must be neutralised for this hermetic case.
     """
+    monkeypatch.delenv("GTFS_MCP_PUBLICtransport_ROOT", raising=False)
     monkeypatch.delenv("GTFS_MCP_MYWIENERLINIEN_ROOT", raising=False)
-    monkeypatch.setattr(config_module.settings, "mywienerlinien_root", None)
-    assert resolve_mywienerlinien_cities_root() is None
+    monkeypatch.setattr(config_module.settings, "publictransport_root", None)
+    assert resolve_publictransport_cities_root() is None
     mgr = GTFSFeedManager(tmp_path / "depot", persist=False)
     feed_dir = tmp_path / "depot" / "wien"
     feed_dir.mkdir(parents=True)
     (feed_dir / "stops.txt").write_text("stop_id,stop_name,stop_lat,stop_lon\n")
     mgr.feeds["wien"] = SimpleNamespace(stops=[], routes=[], trips=[], stop_times=[])
-    result = mgr.export_to_mywienerlinien("wien")
+    result = mgr.export_to_publictransport("wien")
     assert result["success"] is False
-    assert "GTFS_MCP_MYWIENERLINIEN_ROOT" in result["message"]
+    assert "GTFS_MCP_PUBLICtransport_ROOT" in result["message"]

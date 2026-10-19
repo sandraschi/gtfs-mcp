@@ -568,29 +568,32 @@ async def depot_stats() -> dict:
 @mcp.tool(annotations=_MUTATING)
 async def export_feed(
     feed_id: Annotated[str, Field(description="ID of the depot feed to export")],
-    target: Annotated[str, Field(description="Export target (currently only 'mywienerlinien')")] = "mywienerlinien",
+    target: Annotated[
+        str, Field(description="Export target (currently only 'publictransport-mcp')")
+    ] = "publictransport-mcp",
 ) -> dict:
-    """Export a depot feed to the mywienerlinien city app.
+    """Export a depot feed to the publictransport-mcp city app.
 
     Copies the feed's CSV tables into a per-city folder
-    mywienerlinien/scripts/gtfs_data/cities/<feed_id>/ + manifest.json
+    publictransport-mcp/scripts/gtfs_data/cities/<feed_id>/ + manifest.json
     (plus cities/index.json) so Vienna tooling and other cities never
-    clobber each other's files. The mywienerlinien root resolves via
-    GTFS_MCP_MYWIENERLINIEN_ROOT env (else a sibling checkout); when it
-    cannot be resolved the export refuses with guidance.
+    clobber each other's files. The publictransport-mcp root resolves via
+    GTFS_MCP_PUBLICtransport_ROOT env (fallback GTFS_MCP_MYWIENERLINIEN_ROOT,
+    else a sibling checkout); when it cannot be resolved the export refuses
+    with guidance.
 
     ## Return Format
     {"success": bool, "message": str, "dest": str | None, "files": [...], "error": str | None}
 
     ## Examples
     export_feed(feed_id="default")
-    export_feed(feed_id="vienna", target="mywienerlinien")
+    export_feed(feed_id="vienna", target="publictransport-mcp")
     """
     global feed_manager
 
     if feed_manager is None:
         return {"success": False, "message": "Feed manager not initialized", "error": "Feed manager not initialized"}
-    if target != "mywienerlinien":
+    if target not in ("publictransport-mcp", "mywienerlinien"):
         return {
             "success": False,
             "message": f"Unknown export target: {target}",
@@ -598,7 +601,7 @@ async def export_feed(
         }
     import asyncio as _asyncio
 
-    result = await _asyncio.to_thread(feed_manager.export_to_mywienerlinien, feed_id)
+    result = await _asyncio.to_thread(feed_manager.export_to_publictransport, feed_id)
     return result
 
 

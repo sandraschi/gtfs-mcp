@@ -24,20 +24,24 @@ from .snapshot import write_snapshot
 logger = logging.getLogger(__name__)
 
 
-def resolve_mywienerlinien_cities_root() -> Path | None:
-    """Where `export_to_mywienerlinien` writes (never a hardcoded path).
+def resolve_publictransport_cities_root() -> Path | None:
+    """Where `export_to_publictransport` writes (never a hardcoded path).
 
-    Precedence: explicit GTFS_MCP_MYWIENERLINIEN_ROOT env (read fresh on every
-    call, so tests can monkeypatch) → Settings.mywienerlinien_root (env value
-    at import, else a `mywienerlinien` sibling of the repo root carrying
-    scripts/gtfs_data) → None (caller refuses with guidance).
+    Precedence: explicit GTFS_MCP_PUBLICtransport_ROOT env (fallback
+    GTFS_MCP_MYWIENERLINIEN_ROOT, read fresh on every call so tests can
+    monkeypatch) → Settings.publictransport_root (env value at import, else a
+    `publictransport-mcp` sibling of the repo root carrying scripts/gtfs_data)
+    → None (caller refuses with guidance).
     """
-    explicit = os.environ.get("GTFS_MCP_MYWIENERLINIEN_ROOT", "").strip()
+    explicit = (
+        os.environ.get("GTFS_MCP_PUBLICtransport_ROOT", "").strip()
+        or os.environ.get("GTFS_MCP_MYWIENERLINIEN_ROOT", "").strip()
+    )
     if explicit:
         return Path(explicit).expanduser() / "scripts" / "gtfs_data" / "cities"
     from ..config import get_settings
 
-    root = get_settings().mywienerlinien_root
+    root = get_settings().publictransport_root
     if root is None:
         return None
     return Path(root) / "scripts" / "gtfs_data" / "cities"
@@ -63,7 +67,7 @@ class GTFSFeedManager:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         # Normalized per-feed snapshots (SPEC-gtfs-delegation Phase 1 contract):
-        # <data_dir>/snapshots/<safe_feed_id>.db, read directly by mywienerlinien.
+        # <data_dir>/snapshots/<safe_feed_id>.db, read directly by publictransport-mcp.
         self.snapshot_dir = (self.data_dir / "snapshots").resolve()
         self.snapshot_dir.mkdir(parents=True, exist_ok=True)
 
@@ -387,18 +391,19 @@ class GTFSFeedManager:
         }
         index_path.write_text(json.dumps(index, indent=2), encoding="utf-8")
 
-    def export_to_mywienerlinien(self, feed_id: str) -> dict:
-        """Copy a parsed feed's CSV tables into a per-city dir in the mywienerlinien tree.
+    def export_to_publictransport(self, feed_id: str) -> dict:
+        """Copy a parsed feed's CSV tables into a per-city dir in the publictransport-mcp tree.
 
         Each feed gets its own folder
-        ``<mywienerlinien>/scripts/gtfs_data/cities/<feed_id>/`` (+ manifest.json),
+        ``<publictransport-mcp>/scripts/gtfs_data/cities/<feed_id>/`` (+ manifest.json),
         so exporting Munich never clobbers Vienna's ``extracted/`` files.
-        The mywienerlinien root resolves via GTFS_MCP_MYWIENERLINIEN_ROOT env,
-        else a `mywienerlinien` sibling of this repo; when neither resolves the
-        export refuses with guidance instead of writing nowhere.
-        mywienerlinien's live reader still points at ``extracted/`` (Vienna) -
-        per-city data switching over there is a separate change; ``cities/``
-        carries an index.json listing everything available for it.
+        The publictransport-mcp root resolves via GTFS_MCP_PUBLICtransport_ROOT env
+        (fallback GTFS_MCP_MYWIENERLINIEN_ROOT), else a `publictransport-mcp`
+        sibling of this repo; when neither resolves the export refuses with
+        guidance instead of writing nowhere.
+        publictransport-mcp reads per-city data via its data-city helpers
+        (Vienna default stays on ``extracted/``); ``cities/`` carries an
+        index.json listing everything available for it.
         """
         feed = self.feeds.get(feed_id)
         if feed is None:
@@ -415,15 +420,15 @@ class GTFSFeedManager:
                 "message": f"Feed directory missing: {src_dir}",
                 "error": f"Feed directory missing: {src_dir}",
             }
-        cities_root = resolve_mywienerlinien_cities_root()
+        cities_root = resolve_publictransport_cities_root()
         if cities_root is None:
             return {
                 "success": False,
                 "message": (
-                    "mywienerlinien checkout not found: set GTFS_MCP_MYWIENERLINIEN_ROOT "
-                    "to its repo root (or check out mywienerlinien next to gtfs-mcp)"
+                    "publictransport-mcp checkout not found: set GTFS_MCP_PUBLICtransport_ROOT "
+                    "to its repo root (or check out publictransport-mcp next to gtfs-mcp)"
                 ),
-                "error": "mywienerlinien_root unresolved",
+                "error": "publictransport_root unresolved",
             }
         dest_root = cities_root / safe_id
         try:
@@ -451,13 +456,13 @@ class GTFSFeedManager:
             self._refresh_city_index(cities_root, safe_id, manifest)
             return {
                 "success": True,
-                "message": f"Exported {len(copied)} file(s) to mywienerlinien cities/{safe_id}",
+                "message": f"Exported {len(copied)} file(s) to publictransport-mcp cities/{safe_id}",
                 "dest": str(dest_root),
                 "files": copied,
                 "counts": manifest["counts"],
             }
         except Exception as e:
-            logger.exception("export_to_mywienerlinien failed for %s", feed_id)
+            logger.exception("export_to_publictransport failed for %s", feed_id)
             return {"success": False, "message": str(e), "error": str(e)}
 
     def _needs_update(self, feed_id: str, update_interval: int) -> bool:

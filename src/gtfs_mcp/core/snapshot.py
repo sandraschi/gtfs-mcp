@@ -1,6 +1,6 @@
 """Normalized per-feed SQLite snapshots (SPEC-gtfs-delegation Phase 1).
 
-Contract (mywienerlinien reads this file directly, no MCP round-trip for bulk):
+Contract (publictransport-mcp reads this file directly, no MCP round-trip for bulk):
 - location: ``<gtfs-mcp data_dir>/snapshots/<safe_feed_id>.db``
 - ``journal_mode=WAL``; readers are lock-free while gtfs-mcp (sole writer) refreshes
 - refreshed atomically: build to ``<name>.db.tmp`` then ``os.replace`` so readers

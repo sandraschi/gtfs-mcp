@@ -194,25 +194,27 @@ async def depot_stats():
 
 
 class ExportRequest(BaseModel):
-    target: str = "mywienerlinien"
+    target: str = "publictransport-mcp"
 
 
 @router.post("/feeds/{feed_id}/export")
 async def export_feed(feed_id: str, body: ExportRequest):
-    """Export a depot feed. Currently supports target='mywienerlinien'.
+    """Export a depot feed. Currently supports target='publictransport-mcp'
+    ('mywienerlinien' accepted as a deprecated alias).
 
     Copies the feed's extracted CSV tables into a per-city folder
-    mywienerlinien/scripts/gtfs_data/cities/<feed_id>/ + manifest.json
-    (never touches the shared extracted/ Vienna files). The mywienerlinien
-    root resolves via GTFS_MCP_MYWIENERLINIEN_ROOT env (else sibling checkout).
+    publictransport-mcp/scripts/gtfs_data/cities/<feed_id>/ + manifest.json
+    (never touches the shared extracted/ Vienna files). The root resolves via
+    GTFS_MCP_PUBLICtransport_ROOT env (fallback GTFS_MCP_MYWIENERLINIEN_ROOT,
+    else sibling checkout).
     """
     from ....services.gtfs_service import feed_manager
 
     if feed_manager is None:
         raise HTTPException(status_code=503, detail="Feed manager not initialized")
-    if body.target != "mywienerlinien":
+    if body.target not in ("publictransport-mcp", "mywienerlinien"):
         raise HTTPException(status_code=400, detail=f"Unknown export target: {body.target}")
-    result = await __import__("asyncio").to_thread(feed_manager.export_to_mywienerlinien, feed_id)
+    result = await __import__("asyncio").to_thread(feed_manager.export_to_publictransport, feed_id)
     if not result.get("success"):
         raise HTTPException(
             status_code=404 if "not found" in str(result.get("error", "")).lower() else 400,
